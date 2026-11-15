@@ -33,13 +33,19 @@ import {
 import { restartAudioSystem, stopAudioSystem } from './audio.js';
 import { fetchWeather, updateStealthClock } from './weather.js';
 import { startSystem, stopSystem, requestInitialPermissions } from './camera.js';
+import { checkAndInitReceiverMode } from './babyphone.js';
 
-// Service Worker registrieren & direkt alle Berechtigungen (Kamera + Mikrofon) anfragen
+// Prüfen, ob die Seite über den Telegram-Babyphone-Link (?listen=...) als Zuhörer geöffnet wurde
+const isReceiverMode = checkAndInitReceiverMode();
+
+// Service Worker registrieren & direkt alle Berechtigungen (Kamera + Mikrofon) anfragen (nur auf dem Überwachungsgerät)
 window.addEventListener('load', () => {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Setup fehlgeschlagen', err));
     }
-    requestInitialPermissions();
+    if (!isReceiverMode) {
+        requestInitialPermissions();
+    }
 });
 
 // Einstellungen ein-/ausblenden

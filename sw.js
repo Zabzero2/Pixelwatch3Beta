@@ -13,6 +13,7 @@ const urlsToCache = [
   './src/audio.js',
   './src/weather.js',
   './src/telegram.js',
+  './src/babyphone.js',
   './src/analyzer.js',
   './src/camera.js'
 ];
