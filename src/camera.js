@@ -1,4 +1,4 @@
-// Kamera-Steuerung, System-Start/Stop & Haupt-Renderloop
+// Kamera-Steuerung, Berechtigungs-Initialisierung, System-Start/Stop & Haupt-Renderloop
 
 import {
     video, canvas, ctx, cameraSelect, slideCamZoom, valCamZoom,
@@ -6,10 +6,33 @@ import {
 } from './dom.js';
 import { state, FRAME_INTERVAL } from './state.js';
 import { createZoomDisplays, updateMonitorButtonUI } from './ui.js';
-import { initAudio, restartAudioSystem, stopAudioSystem, processAudio } from './audio.js';
+import { initAudio, restartAudioSystem, stopAudioSystem, processAudio, getRoomAudioStream } from './audio.js';
 import { fetchWeather } from './weather.js';
 import { startTelegramPolling, stopTelegramPolling } from './telegram.js';
 import { analyzeAnchor, analyzeMute, analyzeBoxes, drawUI } from './analyzer.js';
+
+// Fragt direkt beim Start der Seite Kamera- UND Mikrofon-Berechtigung ab,
+// damit später unterwegs auch Remote-Befehle wie /audio problemlos funktionieren.
+export async function requestInitialPermissions() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        stream.getTracks().forEach(t => t.stop());
+        state.permissionsGranted = true;
+        await loadCameras();
+    } catch (err) {
+        // Falls Kamera oder Mikrofon einzeln abgefragt werden müssen:
+        try {
+            const vStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            vStream.getTracks().forEach(t => t.stop());
+            await loadCameras();
+        } catch (e) {}
+        try {
+            const aStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            aStream.getTracks().forEach(t => t.stop());
+        } catch (e) {}
+    }
+}
 
 export async function loadCameras() {
     try {
@@ -50,6 +73,19 @@ export async function startSystem() {
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = stream;
         state.currentTrack = stream.getVideoTracks()[0];
+
+        // Sicherstellen, dass auch die Mikrofon-Berechtigung direkt beim Start erteilt ist
+        // (für späteres /audio via Telegram, auch wenn Audio-Wächter anfangs aus ist)
+        if (!state.permissionsGranted && !chkAudioGuard.checked) {
+            try {
+                const testAudio = await getRoomAudioStream();
+                testAudio.getTracks().forEach(t => t.stop());
+                state.permissionsGranted = true;
+            } catch (micErr) {
+                console.warn('Mikrofon-Freigabe noch nicht erteilt:', micErr);
+            }
+        }
+
         setTimeout(() => {
             try {
                 const caps = state.currentTrack.getCapabilities();
@@ -69,6 +105,7 @@ export async function startSystem() {
             try { state.wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
         }
         state.isRunning = true;
+        state.isMonitoring = true;
         state.lastFrameTime = Date.now();
         updateMonitorButtonUI();
 

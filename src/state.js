@@ -36,6 +36,7 @@ export const muteBox = {
 export const state = {
     isRunning: false,
     isMonitoring: true,
+    permissionsGranted: false,
     showZoomValues: true,
     showCamera: true,
 

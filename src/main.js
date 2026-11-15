@@ -32,14 +32,15 @@ import {
 } from './storage.js';
 import { restartAudioSystem, stopAudioSystem } from './audio.js';
 import { fetchWeather, updateStealthClock } from './weather.js';
-import { startSystem, stopSystem } from './camera.js';
+import { startSystem, stopSystem, requestInitialPermissions } from './camera.js';
 
-// Service Worker registrieren
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
+// Service Worker registrieren & direkt alle Berechtigungen (Kamera + Mikrofon) anfragen
+window.addEventListener('load', () => {
+    if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Setup fehlgeschlagen', err));
-    });
-}
+    }
+    requestInitialPermissions();
+});
 
 // Einstellungen ein-/ausblenden
 toggleSettingsBtn.addEventListener('click', () => {
@@ -256,6 +257,10 @@ document.getElementById('btnResetAll').addEventListener('click', resetAllModules
 
 // Überwachung Aktiv/Pausiert Button
 monitorBtn.addEventListener('click', () => {
+    if (!state.isRunning) {
+        alert('Bitte erst Kamera starten!');
+        return;
+    }
     state.isMonitoring = !state.isMonitoring;
     if (!state.isMonitoring) {
         boxes.forEach(b => { b.isAlarm = false; b.validCrossings = 0; });

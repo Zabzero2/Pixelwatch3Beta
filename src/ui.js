@@ -100,17 +100,21 @@ export function updateMonitorButtonUI() {
     if (state.isRunning) {
         startBtn.innerText = "⏹ Kamera Stopp";
         startBtn.classList.add("running");
+
+        if (state.isMonitoring) {
+            monitorBtn.innerText = "🛡️ Überwachung: SCHARF";
+            monitorBtn.style.background = "";
+            monitorBtn.classList.remove("off");
+        } else {
+            monitorBtn.innerText = "⏸ Überwachung: PAUSIERT";
+            monitorBtn.style.background = "#dc3545";
+            monitorBtn.classList.add("off");
+        }
     } else {
         startBtn.innerText = "📷 Kamera Start";
         startBtn.classList.remove("running");
-    }
 
-    if (state.isMonitoring) {
-        monitorBtn.innerText = "🛡️ Überwachung: SCHARF";
-        monitorBtn.style.background = "";
-        monitorBtn.classList.remove("off");
-    } else {
-        monitorBtn.innerText = "⏸ Überwachung: PAUSIERT";
+        monitorBtn.innerText = "⚠️ Überwachung: AUS (Kamera starten)";
         monitorBtn.style.background = "#dc3545";
         monitorBtn.classList.add("off");
     }
