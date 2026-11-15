@@ -2,13 +2,13 @@
 
 import {
     video, canvas, ctx, cameraSelect, slideCamZoom, valCamZoom,
-    startBtn, chkAudioGuard
+    chkAudioGuard
 } from './dom.js';
 import { state, FRAME_INTERVAL } from './state.js';
 import { createZoomDisplays, updateMonitorButtonUI } from './ui.js';
-import { initAudio, restartAudioSystem, processAudio } from './audio.js';
+import { initAudio, restartAudioSystem, stopAudioSystem, processAudio } from './audio.js';
 import { fetchWeather } from './weather.js';
-import { pollTelegram } from './telegram.js';
+import { startTelegramPolling, stopTelegramPolling } from './telegram.js';
 import { analyzeAnchor, analyzeMute, analyzeBoxes, drawUI } from './analyzer.js';
 
 export async function loadCameras() {
@@ -69,14 +69,13 @@ export async function startSystem() {
             try { state.wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
         }
         state.isRunning = true;
-        startBtn.innerText = 'Kamera Stoppen';
         state.lastFrameTime = Date.now();
         updateMonitorButtonUI();
 
         initAudio();
         if (chkAudioGuard.checked) restartAudioSystem();
         fetchWeather();
-        setTimeout(pollTelegram, 2000);
+        startTelegramPolling();
 
         requestAnimationFrame(processFrame);
     } catch (err) {
@@ -86,9 +85,16 @@ export async function startSystem() {
 
 export function stopSystem() {
     state.isRunning = false;
-    if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
-    if (state.wakeLock) state.wakeLock.release();
-    startBtn.innerText = 'Kamera Start';
+    if (video.srcObject) {
+        video.srcObject.getTracks().forEach(t => t.stop());
+        video.srcObject = null;
+    }
+    stopAudioSystem();
+    stopTelegramPolling();
+    if (state.wakeLock) {
+        try { state.wakeLock.release(); } catch (e) {}
+        state.wakeLock = null;
+    }
     updateMonitorButtonUI();
 }
 
@@ -104,15 +110,15 @@ export function processFrame() {
 
     processAudio();
 
+    if (!canvas.width || !canvas.height) return;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    const fullFrame = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const imgW = canvas.width;
     const imgH = canvas.height;
 
-    analyzeAnchor(now, fullFrame, imgW, imgH);
-    analyzeMute(now, fullFrame, imgW, imgH);
-    analyzeBoxes(now, fullFrame, imgW, imgH);
+    analyzeAnchor(now, imgW, imgH);
+    analyzeMute(now, imgW, imgH);
+    analyzeBoxes(now, imgW, imgH);
 
     drawUI();
 }

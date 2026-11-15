@@ -1,4 +1,4 @@
-// Lokale Alarmtöne (Web Audio API) & Mikrofon Audio-Wächter
+// Lokale Alarmtöne (Web Audio API) & Mikrofon Audio-Wächter (Optimiert für Raumüberwachung)
 
 import {
     chkTelegram, txtTelegramToken, txtTelegramChatId,
@@ -8,6 +8,27 @@ import {
 import { state } from './state.js';
 import { recordAndSendAudio } from './telegram.js';
 import { updateSmartUI, updateAppVisuals } from './ui.js';
+
+// Deaktiviert aggressive Sprachfilter (Noise-Suppression & Echo-Cancellation),
+// damit Raumgeräusche, Piepstöne und weiter entfernte Stimmen nicht abgehackt werden.
+export const ROOM_AUDIO_CONSTRAINTS = {
+    audio: {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: true,
+        channelCount: 1,
+        sampleRate: 48000
+    }
+};
+
+export async function getRoomAudioStream() {
+    try {
+        return await navigator.mediaDevices.getUserMedia(ROOM_AUDIO_CONSTRAINTS);
+    } catch (err) {
+        // Fallback falls ein Gerät spezifische Constraints ablehnt
+        return await navigator.mediaDevices.getUserMedia({ audio: true });
+    }
+}
 
 export function isLocalMuted() {
     if (!chkTelegram.checked || !txtTelegramToken.value.trim() || !txtTelegramChatId.value.trim()) return false;
@@ -89,15 +110,20 @@ export function playLoudAlarm() {
     osc.stop(state.audioCtx.currentTime + 0.8);
 }
 
-export async function restartAudioSystem() {
+export function stopAudioSystem() {
     if (state.micStream) {
         state.micStream.getTracks().forEach(t => t.stop());
         state.micStream = null;
     }
+    state.analyser = null;
+}
+
+export async function restartAudioSystem() {
+    stopAudioSystem();
     if (!chkAudioGuard.checked || !state.isRunning) return;
     try {
         initAudio();
-        state.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        state.micStream = await getRoomAudioStream();
         const source = state.audioCtx.createMediaStreamSource(state.micStream);
         state.analyser = state.audioCtx.createAnalyser();
         state.analyser.fftSize = 256;

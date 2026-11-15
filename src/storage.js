@@ -102,29 +102,30 @@ export function loadSettings() {
             if (s.settingsVisible !== undefined) {
                 state.settingsVisible = s.settingsVisible;
                 mainSettingsWrapper.style.display = state.settingsVisible ? 'flex' : 'none';
-                toggleSettingsBtn.style.background = state.settingsVisible ? '#666' : '#444';
+                toggleSettingsBtn.classList.toggle('active-btn', state.settingsVisible);
             }
 
-            if (s.panelDisplayOpen !== undefined) {
-                state.panelDisplayOpen = s.panelDisplayOpen;
-                if (state.panelDisplayOpen) { panelDisplaySettings.style.display = 'flex'; btnToggleDisplayConfig.classList.add('open'); }
-            }
-            if (s.panelMainOpen !== undefined) {
-                state.panelMainOpen = s.panelMainOpen;
-                if (state.panelMainOpen) { panelMainSettings.style.display = 'flex'; btnToggleMainConfig.classList.add('open'); }
-            }
-            if (s.panelAnchorOpen !== undefined) {
-                state.panelAnchorOpen = s.panelAnchorOpen;
-                if (state.panelAnchorOpen) { panelAnchorSettings.style.display = 'flex'; btnToggleAnchorConfig.classList.add('open'); }
-            }
-            if (s.panelMuteOpen !== undefined) {
-                state.panelMuteOpen = s.panelMuteOpen;
-                if (state.panelMuteOpen) { panelMuteSettings.style.display = 'flex'; btnToggleMuteConfig.classList.add('open'); }
-            }
-            if (s.panelSmartOpen !== undefined) {
-                state.panelSmartOpen = s.panelSmartOpen;
-                if (state.panelSmartOpen) { panelSmartSettings.style.display = 'flex'; btnToggleSmartConfig.classList.add('open'); }
-            }
+            // Akkordeon: Maximal ein gespeichertes Panel beim Start öffnen
+            const panelRestoreList = [
+                { flag: s.panelDisplayOpen, prop: 'panelDisplayOpen', panel: panelDisplaySettings, btn: btnToggleDisplayConfig },
+                { flag: s.panelMainOpen, prop: 'panelMainOpen', panel: panelMainSettings, btn: btnToggleMainConfig },
+                { flag: s.panelAnchorOpen, prop: 'panelAnchorOpen', panel: panelAnchorSettings, btn: btnToggleAnchorConfig },
+                { flag: s.panelMuteOpen, prop: 'panelMuteOpen', panel: panelMuteSettings, btn: btnToggleMuteConfig },
+                { flag: s.panelSmartOpen, prop: 'panelSmartOpen', panel: panelSmartSettings, btn: btnToggleSmartConfig }
+            ];
+            let openedOne = false;
+            panelRestoreList.forEach(item => {
+                if (item.flag && !openedOne) {
+                    openedOne = true;
+                    state[item.prop] = true;
+                    item.panel.style.display = 'flex';
+                    item.btn.classList.add('open');
+                } else {
+                    state[item.prop] = false;
+                    item.panel.style.display = 'none';
+                    item.btn.classList.remove('open');
+                }
+            });
 
             if (s.positions) {
                 s.positions.forEach((pos, idx) => {

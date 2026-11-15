@@ -69,6 +69,8 @@ export const state = {
     isRecordingAudio: false,
     isRecordingBoxId: null,
     tgUpdateOffset: 0,
+    isPollingTelegram: false,
+    tgPollTimeout: null,
 
     // Frame Loop Variablen
     lastFrameTime: 0,

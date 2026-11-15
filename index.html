@@ -71,286 +71,399 @@
     </div>
 </div>
 
-<div style="width: 100%; max-width: 1000px; margin: 0 auto;">
-    <div id="topPanelContainer">
-        <div id="zoomHeader"></div>
+<div class="app-shell">
+    <!-- Obere Kommandozeile -->
+    <div class="control-bar">
+        <button id="startBtn">📷 Kamera Start</button>
+        <button id="monitorBtn">🛡️ Überwachung: SCHARF</button>
+        <button id="activateStealthBtn">🌙 Tarnmodus</button>
+        <button id="toggleSettingsBtn">⚙️ Menü</button>
+        <button id="helpBtn">❓</button>
     </div>
-    <div class="dpad-container" id="dpadPanel">
-        <div style="font-size: 13px; color: #00ff88; margin-bottom: 5px;">Ausgewählte Box <span id="selectedBoxId">1</span></div>
-        <div class="dpad-grid">
-            <div style="display:flex; flex-direction:column; align-items:center; gap:5px;">
-                <span style="font-size: 11px; color:#aaa;">Rahmen-Breite</span>
-                <div style="display:flex; gap:5px;">
-                    <button class="dpad-btn" style="padding: 10px 15px;" id="btnWMinus">-</button>
-                    <button class="dpad-btn" style="padding: 10px 15px;" id="btnWPlus">+</button>
-                </div>
-            </div>
-            <button class="dpad-btn" id="btnUp" style="padding: 15px 25px;">🔼</button>
-            <div style="display:flex; flex-direction:column; align-items:center; gap:5px;">
-                <span style="font-size: 11px; color:#aaa;">Rahmen-Höhe</span>
-                <div style="display:flex; gap:5px;">
-                    <button class="dpad-btn" style="padding: 10px 15px;" id="btnHMinus">-</button>
-                    <button class="dpad-btn" style="padding: 10px 15px;" id="btnHPlus">+</button>
-                </div>
-            </div>
-            <button class="dpad-btn" id="btnLeft" style="padding: 15px 25px;">◀️</button>
-            <button class="dpad-btn" id="btnDown" style="padding: 15px 25px;">🔽</button>
-            <button class="dpad-btn" id="btnRight" style="padding: 15px 25px;">▶️</button>
-        </div>
-    </div>
-</div>
-
-<div id="ui">
-    <div class="button-row">
-        <button id="startBtn">Kamera Start</button>
-        <button id="monitorBtn" class="off">Kamera starten zur Überwachung</button>
-        <button id="activateStealthBtn">Tarnmodus</button>
-        <button id="toggleSettingsBtn" style="background: #444; padding: 12px 18px; font-size: 18px;">⚙️</button>
-        <button id="helpBtn" style="background: #17a2b8; padding: 12px 18px; font-size: 18px;">❓</button>
-    </div>
-    
     <div class="stealth-hint">Tipp: Tarnmodus beenden durch Tippen auf den unteren Uhr-Punkt.</div>
 
-    <div id="mainSettingsWrapper">
-        
-        <div class="module-section sec-display">
-            <div class="module-header">
-                <span style="display: flex; align-items: center; gap: 10px;">Anzeige & Justierung</span>
-                <button class="config-btn" id="btnToggleDisplayConfig">⚙️</button>
-            </div>
-            <div class="module-body" id="panelDisplaySettings" style="display: none;">
-                <div class="checkbox-group" style="flex-wrap: wrap; margin-bottom: 10px;">
-                    <label><input type="checkbox" id="chkExpert"> Experten</label>
-                    <label><input type="checkbox" id="chkShowZoom" checked> Werte</label>
-                    <label><input type="checkbox" id="chkShowCam" checked> Live-Bild</label>
-                    <label><input type="checkbox" id="chkShowDpad" checked> D-Pad</label>
-                </div>
-                <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                    <select id="cameraSelect" style="background: #444; color: white; border: 1px solid #666; border-radius: 4px; padding: 5px; flex-grow: 1; max-width: 250px;">
-                        <option value="default">Standard Kamera</option>
-                    </select>
-                    <button id="btnResetAll" style="background: #dc3545; font-size: 12px; padding: 8px 12px; margin-left: auto;">⚠ Alles Zurücksetzen</button>
-                </div>
-                <div class="slider-row" id="rowCamZoom" style="margin-top: 10px;">
-                    <label>Live-Zoom: <span id="valCamZoom">1.0</span>x</label>
-                    <button class="adj-btn" id="zoomMinus">-</button>
-                    <input type="range" id="slideCamZoom" min="1" max="10" step="0.1" value="1">
-                    <button class="adj-btn" id="zoomPlus">+</button>
-                </div>
-            </div>
+    <!-- Kompaktes Cockpit: Zoom-Vorschauen links, schlankes D-Pad rechts -->
+    <div class="cockpit-grid">
+        <div id="topPanelContainer">
+            <div id="zoomHeader"></div>
         </div>
 
-        <div class="module-section sec-main">
-            <div class="module-header">
-                <span>Mess-Felder (Rhythmus)</span>
-                <button class="config-btn" id="btnToggleMainConfig">⚙️</button>
-            </div>
-            <div class="module-body" id="panelMainSettings" style="display: none;">
-                <div class="slider-row">
-                    <label>Anzahl Felder:</label>
-                    <select id="boxCountSelect">
-                        <option value="1">1 Feld</option>
-                        <option value="2">2 Felder</option> 
-                        <option value="3">3 Felder</option>
-                        <option value="4" selected>4 Felder</option>
-                    </select>
-                </div>
-                <div class="slider-row" id="rowSens">
-                    <label>Pixel-Helligkeit (Limit): <span id="valSens">35</span></label>
-                    <button class="adj-btn" id="sensMinus">-</button>
-                    <input type="range" id="slideSens" min="2" max="100" value="35">
-                    <button class="adj-btn" id="sensPlus">+</button>
-                </div>
-                <div class="slider-row" id="rowMass">
-                    <label>Max-Delta Limit: <span id="valMass">60</span> px</label>
-                    <button class="adj-btn" id="massMinus">-</button>
-                    <input type="range" id="slideMass" min="1" max="700" value="60">
-                    <button class="adj-btn" id="massPlus">+</button>
-                </div>
-                <div class="slider-row" id="rowTakt">
-                    <label>Ziel-Zyklus: <span id="valTakt">2000</span>ms</label>
-                    <button class="adj-btn" id="taktMinus">-</button>
-                    <input type="range" id="slideTakt" min="200" max="4000" step="100" value="2000">
-                    <button class="adj-btn" id="taktPlus">+</button>
-                </div>
-                <div class="slider-row" id="rowToleranz">
-                    <label>Takt-Toleranz: <span id="valToleranz">10</span>%</label>
-                    <button class="adj-btn" id="toleranzMinus">-</button>
-                    <input type="range" id="slideToleranz" min="5" max="100" step="5" value="10">
-                    <button class="adj-btn" id="toleranzPlus">+</button>
-                </div>
-                <div class="slider-row">
-                    <label>Rahmen-Breite: <span id="valWidth">48</span></label>
-                    <button class="adj-btn" id="widthMinus">-</button>
-                    <input type="range" id="slideWidth" min="5" max="100" value="48">
-                    <button class="adj-btn" id="widthPlus">+</button>
-                </div>
-                <div class="slider-row">
-                    <label>Rahmen-Höhe: <span id="valHeight">23</span></label>
-                    <button class="adj-btn" id="heightMinus">-</button>
-                    <input type="range" id="slideHeight" min="5" max="50" value="23">
-                    <button class="adj-btn" id="heightPlus">+</button>
-                </div>
-                <div class="slider-row" id="rowPulse">
-                    <label>Min. Takt-Punkte: <span id="valPulse">2</span></label>
-                    <button class="adj-btn" id="pulseMinus">-</button>
-                    <input type="range" id="slidePulse" min="1" max="10" value="2">
-                    <button class="adj-btn" id="pulsePlus">+</button>
-                </div>
-                <div class="slider-row">
-                    <label>Alarmdauer: <span id="valHold">6.0</span>s</label>
-                    <button class="adj-btn" id="holdMinus">-</button>
-                    <input type="range" id="slideHold" min="0.5" max="10" step="0.5" value="6.0">
-                    <button class="adj-btn" id="holdPlus">+</button>
-                </div>
-                <button id="btnResetMain" class="reset-btn-small">Modul Reset</button>
-            </div>
-        </div>
-
-        <div class="module-section sec-anchor">
-            <div class="module-header">
-                <span style="display: flex; align-items: center; gap: 10px;">Anker-Referenz <label style="font-size:12px; font-weight:normal; cursor:pointer;"><input type="checkbox" id="chkAnchorActive"> Aktiv</label></span>
-                <button class="config-btn" id="btnToggleAnchorConfig">⚙️</button>
-            </div>
-            <div class="module-body" id="panelAnchorSettings" style="display: none;">
-                <div style="text-align: left; margin-bottom: 10px;" id="rowAnchorDriftCheck">
-                    <label style="font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                        <input type="checkbox" id="chkAnchorDrift" checked> Auto-Korrektur (Licht-Drift) aktiv
-                    </label>
-                </div>
-                <div class="slider-row" id="rowAnchorDriftSpeed">
-                    <label>Drift-Tempo: <span id="valAnchorDrift">1</span></label>
-                    <button class="adj-btn" id="anchorDriftMinus">-</button>
-                    <input type="range" id="slideAnchorDrift" min="1" max="10" value="1">
-                    <button class="adj-btn" id="anchorDriftPlus">+</button>
-                </div>
-                <div class="slider-row" id="rowAnchorSens">
-                    <label>Toleranz: <span id="valAnchorSens">15</span></label>
-                    <button class="adj-btn" id="anchorSensMinus">-</button>
-                    <input type="range" id="slideAnchorSens" min="5" max="100" value="15">
-                    <button class="adj-btn" id="anchorSensPlus">+</button>
-                </div>
-                <div class="slider-row">
-                    <label>Breite: <span id="valAnchorW">10</span></label>
-                    <button class="adj-btn" id="anchorWMinus">-</button>
-                    <input type="range" id="slideAnchorW" min="5" max="100" value="10">
-                    <button class="adj-btn" id="anchorWPlus">+</button>
-                </div>
-                <div class="slider-row">
-                    <label>Höhe: <span id="valAnchorH">10</span></label>
-                    <button class="adj-btn" id="anchorHMinus">-</button>
-                    <input type="range" id="slideAnchorH" min="5" max="50" value="10">
-                    <button class="adj-btn" id="anchorHPlus">+</button>
-                </div>
-                <button id="btnResetAnchor" class="reset-btn-small">Modul Reset</button>
-            </div>
-        </div>
-
-        <div class="module-section sec-mute">
-            <div class="module-header">
-                <span style="display: flex; align-items: center; gap: 10px;">Mute-Zone <label style="font-size:12px; font-weight:normal; cursor:pointer;"><input type="checkbox" id="chkMuteActive" checked> Aktiv</label></span>
-                <button class="config-btn" id="btnToggleMuteConfig">⚙️</button>
-            </div>
-            <div class="module-body" id="panelMuteSettings" style="display: none;">
-                <div style="text-align: left; margin-bottom: 10px;" id="rowMuteDriftCheck">
-                    <label style="font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                        <input type="checkbox" id="chkMuteDrift" checked> Auto-Korrektur (Licht-Drift) aktiv
-                    </label>
-                </div>
-                <div class="slider-row" id="rowMuteDriftSpeed">
-                    <label>Drift-Tempo: <span id="valMuteDrift">1</span></label>
-                    <button class="adj-btn" id="muteDriftMinus">-</button>
-                    <input type="range" id="slideMuteDrift" min="1" max="10" value="1">
-                    <button class="adj-btn" id="muteDriftPlus">+</button>
-                </div>
-                <div class="slider-row" id="rowMuteSens">
-                    <label>Toleranz: <span id="valMuteSens">15</span></label>
-                    <button class="adj-btn" id="muteSensMinus">-</button>
-                    <input type="range" id="slideMuteSens" min="5" max="100" value="15">
-                    <button class="adj-btn" id="muteSensPlus">+</button>
-                </div>
-                <div class="slider-row">
-                    <label>Mute-Dauer: <span id="valMuteHold">60</span>s</label>
-                    <button class="adj-btn" id="muteHoldMinus">-</button>
-                    <input type="range" id="slideMuteHold" min="10" max="120" step="1" value="60">
-                    <button class="adj-btn" id="muteHoldPlus">+</button>
-                </div>
-                <div class="slider-row">
-                    <label>Breite: <span id="valMuteW">9</span></label>
-                    <button class="adj-btn" id="muteWMinus">-</button>
-                    <input type="range" id="slideMuteW" min="5" max="100" value="9">
-                    <button class="adj-btn" id="muteWPlus">+</button>
-                </div>
-                <div class="slider-row">
-                    <label>Höhe: <span id="valMuteH">11</span></label>
-                    <button class="adj-btn" id="muteHMinus">-</button>
-                    <input type="range" id="slideMuteH" min="5" max="50" value="11">
-                    <button class="adj-btn" id="muteHPlus">+</button>
-                </div>
-                <button id="btnResetMute" class="reset-btn-small">Modul Reset</button>
-            </div>
-        </div>
-
-        <div class="module-section sec-smart">
-            <div class="module-header">
-                <span style="display: flex; align-items: center; gap: 10px;">Smart-Modem & Warnungen</span>
-                <button class="config-btn" id="btnToggleSmartConfig">⚙️</button>
-            </div>
-            <div class="module-body" id="panelSmartSettings" style="display: none;">
-                <div class="checkbox-group" style="flex-wrap: wrap; margin-bottom: 10px;">
-                    <label><input type="checkbox" id="chkTelegram"> Telegram (Bilder/Media)</label>
-                    <label><input type="checkbox" id="chkAudioGuard"> Audio-Wächter aktiv</label>
-                </div>
-                
-                <div class="slider-row" id="rowLocalSound" style="display: none; margin-bottom: 10px;">
-                    <label style="width: 140px;">Lokale Alarm-Töne:</label>
-                    <select id="selLocalSound">
-                        <option value="on">AN (Tablet klingelt lokal)</option>
-                        <option value="off">AUS (Stumm / Nur via Telegram)</option>
-                    </select>
+        <div class="dpad-container" id="dpadPanel">
+            <div class="dpad-header">🎯 Auswahl: <span id="selectedBoxId">1</span></div>
+            <div class="dpad-layout">
+                <!-- Richtungs-Kreuz -->
+                <div class="dpad-cross">
+                    <div></div>
+                    <button class="dpad-btn" id="btnUp" title="Hoch">🔼</button>
+                    <div></div>
+                    <button class="dpad-btn" id="btnLeft" title="Links">◀️</button>
+                    <button class="dpad-btn" id="btnDown" title="Runter">🔽</button>
+                    <button class="dpad-btn" id="btnRight" title="Rechts">▶️</button>
                 </div>
 
-                <div class="slider-row" id="rowAudioThres">
-                    <label style="width:130px;">Audio-Schwelle: <span id="valAudioThreshold">25</span></label>
-                    <button class="adj-btn" id="audioThresMinus">-</button>
-                    <input type="range" id="slideAudioThreshold" min="1" max="100" value="25">
-                    <button class="adj-btn" id="audioThresPlus">+</button>
-                </div>
-                <div style="font-size:13px; color:#aaa; margin-left: 140px; margin-top:-5px; margin-bottom: 10px;">
-                    Live-Pegel: <span id="liveAudioLevel" style="color:#00ff88; font-weight:bold; font-size: 15px;">0</span>
-                </div>
-
-                <div id="telegramSettingsBox" style="display:none; flex-direction:column; gap:10px; background:#333; padding:10px; border-radius:6px; margin-bottom:10px;">
-                    <div class="slider-row">
-                        <label style="width: 80px;">Bot Token:</label>
-                        <input type="text" id="txtTelegramToken" placeholder="123456:ABC-DEF1234...">
+                <!-- Kompakte Breite/Höhe Tasten -->
+                <div class="dpad-size-controls">
+                    <div class="dpad-size-group">
+                        <span class="dpad-size-label">Breite</span>
+                        <button class="dpad-btn size-btn" id="btnWMinus">-</button>
+                        <button class="dpad-btn size-btn" id="btnWPlus">+</button>
                     </div>
-                    <div class="slider-row">
-                        <label style="width: 80px;">Chat ID:</label>
-                        <input type="text" id="txtTelegramChatId" placeholder="123456789">
+                    <div class="dpad-size-group">
+                        <span class="dpad-size-label">Höhe</span>
+                        <button class="dpad-btn size-btn" id="btnHMinus">-</button>
+                        <button class="dpad-btn size-btn" id="btnHPlus">+</button>
                     </div>
-                    <div class="slider-row" style="margin-top: 5px;">
-                        <label style="width: 80px;">Video-Typ:</label>
-                        <select id="selTgVideoMode">
-                            <option value="box" selected>Nur Alarm-Box (Daten sparen)</option>
-                            <option value="full">HD Vollbild (Max. Details)</option>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Einstellungs-Akkordeon -->
+    <div id="ui">
+        <div id="mainSettingsWrapper">
+            
+            <!-- 1. Anzeige & Justierung -->
+            <div class="module-section sec-display">
+                <div class="module-header">
+                    <span class="module-title-group">Anzeige & Justierung</span>
+                    <button class="config-btn" id="btnToggleDisplayConfig">⚙️</button>
+                </div>
+                <div class="module-body" id="panelDisplaySettings" style="display: none;">
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" id="chkExpert"> Experten</label>
+                        <label><input type="checkbox" id="chkShowZoom" checked> Werte</label>
+                        <label><input type="checkbox" id="chkShowCam" checked> Live-Bild</label>
+                        <label><input type="checkbox" id="chkShowDpad" checked> D-Pad</label>
+                    </div>
+                    <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <select id="cameraSelect" style="background: #323842; color: white; border: 1px solid #4b5563; border-radius: 6px; padding: 7px; flex-grow: 1; max-width: 260px;">
+                            <option value="default">Standard Kamera</option>
+                        </select>
+                        <button id="btnResetAll" style="background: #dc3545; font-size: 12px; padding: 8px 12px; margin-left: auto;">⚠ Alles Zurücksetzen</button>
+                    </div>
+                    <div class="slider-stack" id="rowCamZoom">
+                        <div class="slider-header">
+                            <span>Live-Zoom</span>
+                            <span class="slider-val-badge"><span id="valCamZoom">1.0</span>x</span>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="adj-btn" id="zoomMinus">-</button>
+                            <input type="range" id="slideCamZoom" min="1" max="10" step="0.1" value="1">
+                            <button class="adj-btn" id="zoomPlus">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Mess-Felder (Rhythmus) -->
+            <div class="module-section sec-main">
+                <div class="module-header">
+                    <span class="module-title-group">Mess-Felder (Rhythmus)</span>
+                    <button class="config-btn" id="btnToggleMainConfig">⚙️</button>
+                </div>
+                <div class="module-body" id="panelMainSettings" style="display: none;">
+                    <div class="slider-row">
+                        <label>Anzahl Felder:</label>
+                        <select id="boxCountSelect">
+                            <option value="1">1 Feld</option>
+                            <option value="2">2 Felder</option>
+                            <option value="3">3 Felder</option>
+                            <option value="4" selected>4 Felder</option>
                         </select>
                     </div>
-                </div>
-                <div class="slider-row">
-                    <label>Wetter-Orte:</label>
-                    <input type="text" id="txtWeatherCities" placeholder="München; Lauingen=48.57,10.43">
+                    <div class="slider-stack" id="rowSens">
+                        <div class="slider-header">
+                            <span>Pixel-Helligkeit (Limit)</span>
+                            <span class="slider-val-badge" id="valSens">35</span>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="adj-btn" id="sensMinus">-</button>
+                            <input type="range" id="slideSens" min="2" max="100" value="35">
+                            <button class="adj-btn" id="sensPlus">+</button>
+                        </div>
+                    </div>
+                    <div class="slider-stack" id="rowMass">
+                        <div class="slider-header">
+                            <span>Max-Delta Limit</span>
+                            <span class="slider-val-badge"><span id="valMass">60</span> px</span>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="adj-btn" id="massMinus">-</button>
+                            <input type="range" id="slideMass" min="1" max="700" value="60">
+                            <button class="adj-btn" id="massPlus">+</button>
+                        </div>
+                    </div>
+                    <div class="slider-stack" id="rowTakt">
+                        <div class="slider-header">
+                            <span>Ziel-Zyklus</span>
+                            <span class="slider-val-badge"><span id="valTakt">2000</span> ms</span>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="adj-btn" id="taktMinus">-</button>
+                            <input type="range" id="slideTakt" min="200" max="4000" step="100" value="2000">
+                            <button class="adj-btn" id="taktPlus">+</button>
+                        </div>
+                    </div>
+                    <div class="slider-stack" id="rowToleranz">
+                        <div class="slider-header">
+                            <span>Takt-Toleranz</span>
+                            <span class="slider-val-badge"><span id="valToleranz">10</span> %</span>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="adj-btn" id="toleranzMinus">-</button>
+                            <input type="range" id="slideToleranz" min="5" max="100" step="5" value="10">
+                            <button class="adj-btn" id="toleranzPlus">+</button>
+                        </div>
+                    </div>
+                    <div class="slider-stack">
+                        <div class="slider-header">
+                            <span>Rahmen-Breite</span>
+                            <span class="slider-val-badge" id="valWidth">48</span>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="adj-btn" id="widthMinus">-</button>
+                            <input type="range" id="slideWidth" min="5" max="100" value="48">
+                            <button class="adj-btn" id="widthPlus">+</button>
+                        </div>
+                    </div>
+                    <div class="slider-stack">
+                        <div class="slider-header">
+                            <span>Rahmen-Höhe</span>
+                            <span class="slider-val-badge" id="valHeight">23</span>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="adj-btn" id="heightMinus">-</button>
+                            <input type="range" id="slideHeight" min="5" max="50" value="23">
+                            <button class="adj-btn" id="heightPlus">+</button>
+                        </div>
+                    </div>
+                    <div class="slider-stack" id="rowPulse">
+                        <div class="slider-header">
+                            <span>Min. Takt-Punkte</span>
+                            <span class="slider-val-badge" id="valPulse">2</span>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="adj-btn" id="pulseMinus">-</button>
+                            <input type="range" id="slidePulse" min="1" max="10" value="2">
+                            <button class="adj-btn" id="pulsePlus">+</button>
+                        </div>
+                    </div>
+                    <div class="slider-stack">
+                        <div class="slider-header">
+                            <span>Alarmdauer</span>
+                            <span class="slider-val-badge"><span id="valHold">6.0</span> s</span>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="adj-btn" id="holdMinus">-</button>
+                            <input type="range" id="slideHold" min="0.5" max="10" step="0.5" value="6.0">
+                            <button class="adj-btn" id="holdPlus">+</button>
+                        </div>
+                    </div>
+                    <button id="btnResetMain" class="reset-btn-small">Modul Reset</button>
                 </div>
             </div>
+
+            <!-- 3. Anker-Referenz -->
+            <div class="module-section sec-anchor">
+                <div class="module-header">
+                    <span class="module-title-group">
+                        Anker-Referenz
+                        <label class="module-active-toggle"><input type="checkbox" id="chkAnchorActive"> Aktiv</label>
+                    </span>
+                    <button class="config-btn" id="btnToggleAnchorConfig">⚙️</button>
+                </div>
+                <div class="module-body" id="panelAnchorSettings" style="display: none;">
+                    <div id="rowAnchorDriftCheck">
+                        <label style="font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="chkAnchorDrift" checked> Auto-Korrektur (Licht-Drift) aktiv
+                        </label>
+                    </div>
+                    <div class="slider-stack" id="rowAnchorDriftSpeed">
+                        <div class="slider-header">
+                            <span>Drift-Tempo</span>
+                            <span class="slider-val-badge" id="valAnchorDrift">1</span>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="adj-btn" id="anchorDriftMinus">-</button>
+                            <input type="range" id="slideAnchorDrift" min="1" max="10" value="1">
+                            <button class="adj-btn" id="anchorDriftPlus">+</button>
+                        </div>
+                    </div>
+                    <div class="slider-stack" id="rowAnchorSens">
+                        <div class="slider-header">
+                            <span>Toleranz</span>
+                            <span class="slider-val-badge" id="valAnchorSens">15</span>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="adj-btn" id="anchorSensMinus">-</button>
+                            <input type="range" id="slideAnchorSens" min="5" max="100" value="15">
+                            <button class="adj-btn" id="anchorSensPlus">+</button>
+                        </div>
+                    </div>
+                    <div class="slider-stack">
+                        <div class="slider-header">
+                            <span>Breite</span>
+                            <span class="slider-val-badge" id="valAnchorW">10</span>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="adj-btn" id="anchorWMinus">-</button>
+                            <input type="range" id="slideAnchorW" min="5" max="100" value="10">
+                            <button class="adj-btn" id="anchorWPlus">+</button>
+                        </div>
+                    </div>
+                    <div class="slider-stack">
+                        <div class="slider-header">
+                            <span>Höhe</span>
+                            <span class="slider-val-badge" id="valAnchorH">10</span>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="adj-btn" id="anchorHMinus">-</button>
+                            <input type="range" id="slideAnchorH" min="5" max="50" value="10">
+                            <button class="adj-btn" id="anchorHPlus">+</button>
+                        </div>
+                    </div>
+                    <button id="btnResetAnchor" class="reset-btn-small">Modul Reset</button>
+                </div>
+            </div>
+
+            <!-- 4. Mute-Zone -->
+            <div class="module-section sec-mute">
+                <div class="module-header">
+                    <span class="module-title-group">
+                        Mute-Zone
+                        <label class="module-active-toggle"><input type="checkbox" id="chkMuteActive" checked> Aktiv</label>
+                    </span>
+                    <button class="config-btn" id="btnToggleMuteConfig">⚙️</button>
+                </div>
+                <div class="module-body" id="panelMuteSettings" style="display: none;">
+                    <div id="rowMuteDriftCheck">
+                        <label style="font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="chkMuteDrift" checked> Auto-Korrektur (Licht-Drift) aktiv
+                        </label>
+                    </div>
+                    <div class="slider-stack" id="rowMuteDriftSpeed">
+                        <div class="slider-header">
+                            <span>Drift-Tempo</span>
+                            <span class="slider-val-badge" id="valMuteDrift">1</span>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="adj-btn" id="muteDriftMinus">-</button>
+                            <input type="range" id="slideMuteDrift" min="1" max="10" value="1">
+                            <button class="adj-btn" id="muteDriftPlus">+</button>
+                        </div>
+                    </div>
+                    <div class="slider-stack" id="rowMuteSens">
+                        <div class="slider-header">
+                            <span>Toleranz</span>
+                            <span class="slider-val-badge" id="valMuteSens">15</span>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="adj-btn" id="muteSensMinus">-</button>
+                            <input type="range" id="slideMuteSens" min="5" max="100" value="15">
+                            <button class="adj-btn" id="muteSensPlus">+</button>
+                        </div>
+                    </div>
+                    <div class="slider-stack">
+                        <div class="slider-header">
+                            <span>Mute-Dauer</span>
+                            <span class="slider-val-badge"><span id="valMuteHold">60</span> s</span>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="adj-btn" id="muteHoldMinus">-</button>
+                            <input type="range" id="slideMuteHold" min="10" max="120" step="1" value="60">
+                            <button class="adj-btn" id="muteHoldPlus">+</button>
+                        </div>
+                    </div>
+                    <div class="slider-stack">
+                        <div class="slider-header">
+                            <span>Breite</span>
+                            <span class="slider-val-badge" id="valMuteW">9</span>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="adj-btn" id="muteWMinus">-</button>
+                            <input type="range" id="slideMuteW" min="5" max="100" value="9">
+                            <button class="adj-btn" id="muteWPlus">+</button>
+                        </div>
+                    </div>
+                    <div class="slider-stack">
+                        <div class="slider-header">
+                            <span>Höhe</span>
+                            <span class="slider-val-badge" id="valMuteH">11</span>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="adj-btn" id="muteHMinus">-</button>
+                            <input type="range" id="slideMuteH" min="5" max="50" value="11">
+                            <button class="adj-btn" id="muteHPlus">+</button>
+                        </div>
+                    </div>
+                    <button id="btnResetMute" class="reset-btn-small">Modul Reset</button>
+                </div>
+            </div>
+
+            <!-- 5. Smart-Modem & Warnungen -->
+            <div class="module-section sec-smart">
+                <div class="module-header">
+                    <span class="module-title-group">Smart-Modem & Warnungen</span>
+                    <button class="config-btn" id="btnToggleSmartConfig">⚙️</button>
+                </div>
+                <div class="module-body" id="panelSmartSettings" style="display: none;">
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" id="chkTelegram"> Telegram (Bilder/Media)</label>
+                        <label><input type="checkbox" id="chkAudioGuard"> Audio-Wächter aktiv</label>
+                    </div>
+                    
+                    <div class="slider-row" id="rowLocalSound" style="display: none;">
+                        <label>Lokale Alarm-Töne:</label>
+                        <select id="selLocalSound">
+                            <option value="on">AN (Tablet klingelt lokal)</option>
+                            <option value="off">AUS (Stumm / Nur via Telegram)</option>
+                        </select>
+                    </div>
+
+                    <div class="slider-stack" id="rowAudioThres">
+                        <div class="slider-header">
+                            <span>Audio-Schwelle &bull; Live-Pegel: <b id="liveAudioLevel" style="color:#00ff88;">0</b></span>
+                            <span class="slider-val-badge" id="valAudioThreshold">25</span>
+                        </div>
+                        <div class="slider-controls">
+                            <button class="adj-btn" id="audioThresMinus">-</button>
+                            <input type="range" id="slideAudioThreshold" min="1" max="100" value="25">
+                            <button class="adj-btn" id="audioThresPlus">+</button>
+                        </div>
+                    </div>
+
+                    <div id="telegramSettingsBox" style="display:none; flex-direction:column; gap:8px; background:rgba(0,0,0,0.22); padding:10px; border-radius:7px;">
+                        <div class="slider-row">
+                            <label>Bot Token:</label>
+                            <input type="text" id="txtTelegramToken" placeholder="123456:ABC-DEF1234...">
+                        </div>
+                        <div class="slider-row">
+                            <label>Chat ID:</label>
+                            <input type="text" id="txtTelegramChatId" placeholder="123456789">
+                        </div>
+                        <div class="slider-row">
+                            <label>Video-Typ:</label>
+                            <select id="selTgVideoMode">
+                                <option value="box" selected>Nur Alarm-Box (Daten sparen)</option>
+                                <option value="full">HD Vollbild (Max. Details)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="slider-row">
+                        <label>Wetter-Orte:</label>
+                        <input type="text" id="txtWeatherCities" placeholder="München; Lauingen=48.57,10.43">
+                    </div>
+                </div>
+            </div>
+
         </div>
-
     </div>
-</div>
 
-<div id="container">
-    <video id="video" playsinline autoplay muted></video>
-    <canvas id="canvas"></canvas>
-    <canvas id="recordCanvas" style="display:none;"></canvas>
+    <div id="container">
+        <video id="video" playsinline autoplay muted></video>
+        <canvas id="canvas"></canvas>
+        <canvas id="recordCanvas" style="display:none;"></canvas>
+    </div>
 </div>
 
 <script type="module" src="./src/main.js"></script>

@@ -3,7 +3,8 @@
 import {
     txtWeatherCities, weatherDisplay, hoursHTML, minsHTML,
     chkTelegram, txtTelegramToken, txtTelegramChatId,
-    chkAudioGuard, selLocalSound, stealthOverlay
+    chkAudioGuard, selLocalSound, stealthOverlay,
+    toggleAudioGuardBtnStealth, exitStealthBtn
 } from './dom.js';
 import { state, muteBox } from './state.js';
 
@@ -95,19 +96,16 @@ export async function fetchWeather() {
     weatherDisplay.innerHTML = output.join("");
 }
 
-export function updateStealthClock() {
+export function updateStealthClock(forceUpdate = false) {
+    if (!state.isStealthActive && !forceUpdate) return;
+
     const d = new Date();
     hoursHTML.innerText = String(d.getHours()).padStart(2, '0');
     minsHTML.innerText = String(d.getMinutes()).padStart(2, '0');
 
-    const dots = document.querySelectorAll('#toggleAudioGuardBtnStealth, #exitStealthBtn');
-
-    if (state.isStealthActive && muteBox.active && muteBox.state === 'MUTED') {
-        const visible = d.getSeconds() % 2 === 0;
-        dots.forEach(dot => dot.style.opacity = visible ? "1" : "0");
-    } else {
-        dots.forEach(dot => dot.style.opacity = "1");
-    }
+    const dotOpacity = (state.isStealthActive && muteBox.active && muteBox.state === 'MUTED' && d.getSeconds() % 2 !== 0) ? "0" : "1";
+    toggleAudioGuardBtnStealth.style.opacity = dotOpacity;
+    exitStealthBtn.style.opacity = dotOpacity;
 
     const tgActive = chkTelegram.checked && txtTelegramToken.value.trim() !== '' && txtTelegramChatId.value.trim() !== '';
 

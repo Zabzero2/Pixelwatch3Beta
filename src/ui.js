@@ -1,11 +1,15 @@
-// UI-Steuerung, Zoom-Vorschauen, D-Pad & Drag-and-Drop
+// UI-Steuerung, Zoom-Vorschauen, Akkordeon-Menü, D-Pad & Drag-and-Drop
 
 import {
-    zoomHeader, canvas, monitorBtn, cameraSelect,
+    zoomHeader, canvas, startBtn, monitorBtn, cameraSelect,
     chkExpert, chkAnchorDrift, chkMuteDrift,
     rowAnchorDriftSpeed, rowMuteDriftSpeed,
     chkTelegram, txtTelegramToken, txtTelegramChatId,
     chkAudioGuard, selLocalSound, rowLocalSound,
+    panelDisplaySettings, panelMainSettings, panelAnchorSettings,
+    panelMuteSettings, panelSmartSettings,
+    btnToggleDisplayConfig, btnToggleMainConfig, btnToggleAnchorConfig,
+    btnToggleMuteConfig, btnToggleSmartConfig,
     slideSens, slideMass, slideTakt, slideToleranz,
     slideWidth, slideHeight, slidePulse, slideHold,
     valSens, valMass, valTakt, valToleranz,
@@ -89,37 +93,55 @@ export function updateAppVisuals() {
     } else {
         document.body.classList.remove('silent-mode-on');
     }
-    updateStealthClock();
+    updateStealthClock(true);
 }
 
 export function updateMonitorButtonUI() {
-    if (!state.isRunning) {
-        monitorBtn.innerText = "Kamera starten zur Überwachung";
+    if (state.isRunning) {
+        startBtn.innerText = "⏹ Kamera Stopp";
+        startBtn.classList.add("running");
+    } else {
+        startBtn.innerText = "📷 Kamera Start";
+        startBtn.classList.remove("running");
+    }
+
+    if (state.isMonitoring) {
+        monitorBtn.innerText = "🛡️ Überwachung: SCHARF";
+        monitorBtn.style.background = "";
+        monitorBtn.classList.remove("off");
+    } else {
+        monitorBtn.innerText = "⏸ Überwachung: PAUSIERT";
         monitorBtn.style.background = "#dc3545";
         monitorBtn.classList.add("off");
-    } else {
-        if (state.isMonitoring) {
-            monitorBtn.innerText = "Überwachung: AKTIV";
-            monitorBtn.style.background = "";
-            monitorBtn.classList.remove("off");
-        } else {
-            monitorBtn.innerText = "Überwachung: PAUSIERT";
-            monitorBtn.style.background = "#dc3545";
-            monitorBtn.classList.add("off");
-        }
     }
-    updateStealthClock();
+    updateStealthClock(true);
 }
+
+// Akkordeon-Logik: Beim Öffnen eines Moduls schließen sich die anderen automatisch
+const ALL_PANELS = [
+    { key: 'display', btn: btnToggleDisplayConfig, panel: panelDisplaySettings, stateProp: 'panelDisplayOpen' },
+    { key: 'main', btn: btnToggleMainConfig, panel: panelMainSettings, stateProp: 'panelMainOpen' },
+    { key: 'anchor', btn: btnToggleAnchorConfig, panel: panelAnchorSettings, stateProp: 'panelAnchorOpen' },
+    { key: 'mute', btn: btnToggleMuteConfig, panel: panelMuteSettings, stateProp: 'panelMuteOpen' },
+    { key: 'smart', btn: btnToggleSmartConfig, panel: panelSmartSettings, stateProp: 'panelSmartOpen' }
+];
 
 export function togglePanel(btn, panel, stateVarName) {
     let isOpen = panel.style.display === 'flex';
-    panel.style.display = isOpen ? 'none' : 'flex';
-    isOpen ? btn.classList.remove('open') : btn.classList.add('open');
-    if (stateVarName === 'display') state.panelDisplayOpen = !isOpen;
-    if (stateVarName === 'main') state.panelMainOpen = !isOpen;
-    if (stateVarName === 'anchor') state.panelAnchorOpen = !isOpen;
-    if (stateVarName === 'mute') state.panelMuteOpen = !isOpen;
-    if (stateVarName === 'smart') state.panelSmartOpen = !isOpen;
+    const nextOpenState = !isOpen;
+
+    ALL_PANELS.forEach(item => {
+        if (item.key === stateVarName && nextOpenState) {
+            item.panel.style.display = 'flex';
+            item.btn.classList.add('open');
+            state[item.stateProp] = true;
+        } else {
+            item.panel.style.display = 'none';
+            item.btn.classList.remove('open');
+            state[item.stateProp] = false;
+        }
+    });
+
     saveSettings();
 }
 
@@ -284,23 +306,30 @@ export function setupAdjBtn(minusId, plusId, sliderId) {
     });
 }
 
-// D-Pad Turbo-Steuerung
+// D-Pad Turbo-Steuerung (Speichert erst beim Loslassen in den LocalStorage)
 let turboTimeout = null;
 let turboInterval = null;
+let turboDirty = false;
 
-function startTurboAction(actionFn) {
-    if (!state.selectedBox) return;
-    actionFn(1);
-    if (state.selectedBox === anchorBox) anchorBox.baseline = null;
-    else if (state.selectedBox === muteBox) {
+function resetSelectedBoxBaseline() {
+    if (state.selectedBox === anchorBox) {
+        anchorBox.baseline = null;
+    } else if (state.selectedBox === muteBox) {
         muteBox.baseline = null;
         muteBox.state = 'IDLE';
         muteBox.emptyStartTime = 0;
         muteBox.triggerStart = 0;
-    } else {
+    } else if (state.selectedBox) {
         state.selectedBox.baseline = null;
     }
-    saveSettings();
+}
+
+function startTurboAction(actionFn) {
+    if (!state.selectedBox) return;
+    actionFn(1);
+    resetSelectedBoxBaseline();
+    turboDirty = true;
+
     turboTimeout = setTimeout(() => {
         let speed = 1;
         let tick = 0;
@@ -309,16 +338,8 @@ function startTurboAction(actionFn) {
             if (tick > 15) speed = 3;
             if (tick > 35) speed = 8;
             actionFn(speed);
-            if (state.selectedBox === anchorBox) anchorBox.baseline = null;
-            else if (state.selectedBox === muteBox) {
-                muteBox.baseline = null;
-                muteBox.state = 'IDLE';
-                muteBox.emptyStartTime = 0;
-                muteBox.triggerStart = 0;
-            } else {
-                state.selectedBox.baseline = null;
-            }
-            saveSettings();
+            resetSelectedBoxBaseline();
+            turboDirty = true;
         }, 50);
     }, 600);
 }
@@ -328,6 +349,10 @@ function stopTurboAction() {
     if (turboInterval) clearInterval(turboInterval);
     turboTimeout = null;
     turboInterval = null;
+    if (turboDirty) {
+        turboDirty = false;
+        saveSettings();
+    }
 }
 
 export function bindTurboButton(btnId, actionFn) {

@@ -30,7 +30,7 @@ import {
     saveSettings, loadSettings,
     resetMainModule, resetAnchorModule, resetMuteModule, resetAllModules
 } from './storage.js';
-import { restartAudioSystem } from './audio.js';
+import { restartAudioSystem, stopAudioSystem } from './audio.js';
 import { fetchWeather, updateStealthClock } from './weather.js';
 import { startSystem, stopSystem } from './camera.js';
 
@@ -45,11 +45,11 @@ if ('serviceWorker' in navigator) {
 toggleSettingsBtn.addEventListener('click', () => {
     state.settingsVisible = !state.settingsVisible;
     mainSettingsWrapper.style.display = state.settingsVisible ? 'flex' : 'none';
-    toggleSettingsBtn.style.background = state.settingsVisible ? '#666' : '#444';
+    toggleSettingsBtn.classList.toggle('active-btn', state.settingsVisible);
     saveSettings();
 });
 
-// Modul-Konfigurationsbereiche auf-/zuklappen
+// Modul-Konfigurationsbereiche auf-/zuklappen (Akkordeon)
 btnToggleDisplayConfig.addEventListener('click', () => togglePanel(btnToggleDisplayConfig, panelDisplaySettings, 'display'));
 btnToggleMainConfig.addEventListener('click', () => togglePanel(btnToggleMainConfig, panelMainSettings, 'main'));
 btnToggleAnchorConfig.addEventListener('click', () => togglePanel(btnToggleAnchorConfig, panelAnchorSettings, 'anchor'));
@@ -103,10 +103,7 @@ chkAudioGuard.addEventListener('change', () => {
     saveSettings();
     if (state.isRunning) {
         if (chkAudioGuard.checked) restartAudioSystem();
-        else if (state.micStream) {
-            state.micStream.getTracks().forEach(t => t.stop());
-            state.micStream = null;
-        }
+        else stopAudioSystem();
     }
 });
 
@@ -182,12 +179,12 @@ slideCamZoom.addEventListener('input', (e) => {
 loadSettings();
 
 // Tarnmodus & Uhr-Intervall
-setInterval(updateStealthClock, 500);
+setInterval(() => updateStealthClock(false), 500);
 
 activateStealthBtn.addEventListener('click', () => {
     stealthOverlay.style.display = 'flex';
     state.isStealthActive = true;
-    updateStealthClock();
+    updateStealthClock(true);
     fetchWeather();
 });
 
@@ -205,10 +202,7 @@ toggleAudioGuardBtnStealth.addEventListener('click', (e) => {
     saveSettings();
 
     if (chkAudioGuard.checked && state.isRunning) restartAudioSystem();
-    else if (!chkAudioGuard.checked && state.micStream) {
-        state.micStream.getTracks().forEach(t => t.stop());
-        state.micStream = null;
-    }
+    else if (!chkAudioGuard.checked) stopAudioSystem();
 });
 
 // Slider-Events

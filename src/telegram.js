@@ -5,6 +5,22 @@ import {
     selTgVideoMode, canvas, recordCanvas
 } from './dom.js';
 import { state, boxes, anchorBox } from './state.js';
+import { getRoomAudioStream } from './audio.js';
+
+function getBestAudioRecorderOptions() {
+    const candidates = [
+        'audio/webm;codecs=opus',
+        'audio/ogg;codecs=opus',
+        'audio/webm',
+        'audio/mp4'
+    ];
+    for (const mime of candidates) {
+        if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(mime)) {
+            return { mimeType: mime, audioBitsPerSecond: 96000 };
+        }
+    }
+    return { audioBitsPerSecond: 96000 };
+}
 
 export async function sendTgMessage(text) {
     if (!txtTelegramToken.value || !txtTelegramChatId.value) return;
@@ -50,7 +66,7 @@ export function recordAndSendVideo(boxId, isRemote = false, durationMs = 4000) {
 
         let recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
         let chunks = [];
-        recorder.ondataavailable = e => chunks.push(e.data);
+        recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
         recorder.onstop = async () => {
             let blob = new Blob(chunks, { type: 'video/webm' });
             let fd = new FormData();
@@ -60,7 +76,7 @@ export function recordAndSendVideo(boxId, isRemote = false, durationMs = 4000) {
             state.isRecordingBoxId = null;
             setTimeout(() => { state.isRecordingVideo = false; }, 5000);
         };
-        recorder.start();
+        recorder.start(250);
         setTimeout(() => {
             if (recorder.state !== 'inactive') recorder.stop();
         }, durationMs);
@@ -71,30 +87,49 @@ export function recordAndSendVideo(boxId, isRemote = false, durationMs = 4000) {
     }
 }
 
-export function recordAndSendAudio(isRemote = false, durationMs = 10000) {
-    if (state.isRecordingAudio || !chkTelegram.checked || !state.micStream) return;
+export async function recordAndSendAudio(isRemote = false, durationMs = 10000) {
+    if (state.isRecordingAudio || !chkTelegram.checked) return;
     state.isRecordingAudio = true;
+
     let sec = durationMs / 1000;
     let caption = isRemote ? `🎙️ Remote Live-Audio (${sec}s)` : "🎙️ Audio-Alarm im Raum (10s)";
     if (isRemote) sendTgMessage(caption + " (Wird aufgezeichnet...)");
 
+    let activeStream = state.micStream;
+    let tempStream = null;
+
     try {
-        let recorder = new MediaRecorder(state.micStream);
+        // Falls Audio-Wächter aus ist, für den /audio-Befehl kurzzeitig Mikrofon im Raum-Modus öffnen
+        if (!activeStream) {
+            tempStream = await getRoomAudioStream();
+            activeStream = tempStream;
+        }
+
+        const options = getBestAudioRecorderOptions();
+        let recorder = new MediaRecorder(activeStream, options);
         let chunks = [];
-        recorder.ondataavailable = e => chunks.push(e.data);
+        recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
         recorder.onstop = async () => {
-            let blob = new Blob(chunks, { type: 'audio/webm' });
+            if (tempStream) {
+                tempStream.getTracks().forEach(t => t.stop());
+            }
+            let mimeType = recorder.mimeType || 'audio/webm';
+            let blob = new Blob(chunks, { type: mimeType });
             let fd = new FormData();
-            fd.append("voice", blob, "audio.webm");
+            fd.append("voice", blob, "audio.ogg");
             fd.append("caption", caption);
             await sendTgMedia("sendVoice", fd);
             setTimeout(() => { state.isRecordingAudio = false; }, 5000);
         };
-        recorder.start();
+        // 250ms Timeslice verhindert Puffer-Aussetzer bei längeren Aufnahmen
+        recorder.start(250);
         setTimeout(() => {
             if (recorder.state !== 'inactive') recorder.stop();
         }, durationMs);
     } catch (e) {
+        if (tempStream) {
+            tempStream.getTracks().forEach(t => t.stop());
+        }
         setTimeout(() => { state.isRecordingAudio = false; }, 5000);
     }
 }
@@ -137,13 +172,31 @@ export function sendAnchorTgPhoto() {
     }, 'image/jpeg', 0.9);
 }
 
-export async function pollTelegram() {
-    if (!chkTelegram.checked || !state.isRunning || !txtTelegramToken.value) {
-        setTimeout(pollTelegram, 5000);
+export function stopTelegramPolling() {
+    state.isPollingTelegram = false;
+    if (state.tgPollTimeout) {
+        clearTimeout(state.tgPollTimeout);
+        state.tgPollTimeout = null;
+    }
+}
+
+export function startTelegramPolling() {
+    if (state.isPollingTelegram) return; // Verhindert doppelte Polling-Schleifen
+    state.isPollingTelegram = true;
+    pollTelegramLoop();
+}
+
+async function pollTelegramLoop() {
+    if (!state.isPollingTelegram || !state.isRunning) {
+        state.isPollingTelegram = false;
+        return;
+    }
+    if (!chkTelegram.checked || !txtTelegramToken.value.trim()) {
+        state.tgPollTimeout = setTimeout(pollTelegramLoop, 5000);
         return;
     }
     try {
-        let res = await fetch(`https://api.telegram.org/bot${txtTelegramToken.value.trim()}/getUpdates?offset=${state.tgUpdateOffset}&timeout=30`);
+        let res = await fetch(`https://api.telegram.org/bot${txtTelegramToken.value.trim()}/getUpdates?offset=${state.tgUpdateOffset}&timeout=25`);
         let data = await res.json();
         if (data.ok && data.result.length > 0) {
             for (let item of data.result) {
@@ -173,5 +226,9 @@ export async function pollTelegram() {
             }
         }
     } catch (e) {}
-    setTimeout(pollTelegram, 1000);
+    if (state.isPollingTelegram && state.isRunning) {
+        state.tgPollTimeout = setTimeout(pollTelegramLoop, 1000);
+    } else {
+        state.isPollingTelegram = false;
+    }
 }

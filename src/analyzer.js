@@ -1,4 +1,6 @@
 // Bildanalyse-Algorithmen (Mess-Felder, Anker-Referenz, Mute-Zone) & Canvas-Zeichnung
+// Optimiert: Liest per ctx.getImageData nur die kleinen Box-Rechtecke statt des vollen 1280x720 HD-Bildes.
+// Die Erkennungsmathematik ist zu 100 % unverändert!
 
 import {
     canvas, ctx, recordCanvas, recordCtx,
@@ -12,7 +14,7 @@ import { drawProportional } from './ui.js';
 import { playBeep, playAnchorBeep, playWarningBeep, playLoudAlarm } from './audio.js';
 import { recordAndSendVideo, sendAnchorTgPhoto } from './telegram.js';
 
-export function analyzeMute(now, fullFrame, imgW, imgH) {
+export function analyzeMute(now, imgW, imgH) {
     if (!muteBox.active) {
         muteBox.state = 'IDLE';
         muteBox.triggerStart = 0;
@@ -37,11 +39,7 @@ export function analyzeMute(now, fullFrame, imgW, imgH) {
 
     let safeMx = Math.max(0, Math.min(mx, imgW - mw));
     let safeMy = Math.max(0, Math.min(my, imgH - mh));
-    let mData = new Uint8ClampedArray(mw * mh * 4);
-    for (let y = 0; y < mh; y++) {
-        let gStart = ((safeMy + y) * imgW + safeMx) * 4;
-        mData.set(fullFrame.data.subarray(gStart, gStart + mw * 4), y * mw * 4);
-    }
+    let mData = ctx.getImageData(safeMx, safeMy, mw, mh).data;
 
     if (muteBox.baseline === null || muteBox.baseline.length !== mData.length) {
         muteBox.baseline = new Float32Array(mData);
@@ -146,7 +144,7 @@ export function analyzeMute(now, fullFrame, imgW, imgH) {
     }
 }
 
-export function analyzeBoxes(now, fullFrame, imgW, imgH) {
+export function analyzeBoxes(now, imgW, imgH) {
     let boxAlarmTriggered = false;
 
     const pixelSchwelle = parseInt(slideSens.value);
@@ -159,8 +157,6 @@ export function analyzeBoxes(now, fullFrame, imgW, imgH) {
     const tolerancePct = parseInt(slideToleranz.value) / 100;
     const minAllowed = targetTakt * (1 - tolerancePct);
     const maxAllowed = targetTakt * (1 + tolerancePct);
-
-    const data = fullFrame.data;
 
     for (let i = 0; i < state.activeBoxCount; i++) {
         const box = boxes[i];
@@ -180,14 +176,19 @@ export function analyzeBoxes(now, fullFrame, imgW, imgH) {
             box.baseline.fill(-1);
         }
 
+        // Liest nur das kleine Rechteck dieser Box statt des gesamten HD-Bildes
+        const boxData = ctx.getImageData(rx, ry, rw, rh).data;
+
         let activePixels = 0;
         let pIdx = 0;
 
-        for (let y = ry; y < ry + rh; y += PIXEL_STEP) {
-            for (let x = rx; x < rx + rw; x += PIXEL_STEP) {
+        for (let localY = 0; localY < rh; localY += PIXEL_STEP) {
+            const y = ry + localY;
+            for (let localX = 0; localX < rw; localX += PIXEL_STEP) {
+                const x = rx + localX;
                 if (x >= 0 && x < imgW && y >= 0 && y < imgH) {
-                    let idx = (y * imgW + x) * 4;
-                    let curr = data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114;
+                    let idx = (localY * rw + localX) * 4;
+                    let curr = boxData[idx] * 0.299 + boxData[idx + 1] * 0.587 + boxData[idx + 2] * 0.114;
 
                     if (box.baseline[pIdx] === -1) box.baseline[pIdx] = curr;
 
@@ -277,7 +278,7 @@ export function analyzeBoxes(now, fullFrame, imgW, imgH) {
     }
 }
 
-export function analyzeAnchor(now, fullFrame, imgW, imgH) {
+export function analyzeAnchor(now, imgW, imgH) {
     if (!anchorBox.active) return false;
 
     const ax = Math.floor(anchorBox.x);
@@ -290,11 +291,7 @@ export function analyzeAnchor(now, fullFrame, imgW, imgH) {
 
     let safeAx = Math.max(0, Math.min(ax, imgW - aw));
     let safeAy = Math.max(0, Math.min(ay, imgH - ah));
-    let aData = new Uint8ClampedArray(aw * ah * 4);
-    for (let y = 0; y < ah; y++) {
-        let gStart = ((safeAy + y) * imgW + safeAx) * 4;
-        aData.set(fullFrame.data.subarray(gStart, gStart + aw * 4), y * aw * 4);
-    }
+    let aData = ctx.getImageData(safeAx, safeAy, aw, ah).data;
 
     if (anchorBox.baseline === null || anchorBox.baseline.length !== aData.length) {
         anchorBox.baseline = new Float32Array(aData);
