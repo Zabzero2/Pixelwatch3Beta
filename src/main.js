@@ -38,10 +38,22 @@ import { checkAndInitReceiverMode } from './babyphone.js';
 // Prüfen, ob die Seite über den Telegram-Babyphone-Link (?listen=...) als Zuhörer geöffnet wurde
 const isReceiverMode = checkAndInitReceiverMode();
 
-// Service Worker registrieren & direkt alle Berechtigungen (Kamera + Mikrofon) anfragen (nur auf dem Überwachungsgerät)
-window.addEventListener('load', () => {
+// Alte Service-Worker-Caches bereinigen, SW aktualisieren & Berechtigungen anfragen
+window.addEventListener('load', async () => {
+    if ('caches' in window) {
+        try {
+            const keys = await caches.keys();
+            for (const key of keys) {
+                if (key !== 'pixel-waechter-v2-cache-v5') {
+                    await caches.delete(key);
+                }
+            }
+        } catch (e) {}
+    }
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Setup fehlgeschlagen', err));
+        navigator.serviceWorker.register('sw.js').then(reg => {
+            try { reg.update(); } catch (e) {}
+        }).catch(err => console.log('SW Setup fehlgeschlagen', err));
     }
     if (!isReceiverMode) {
         requestInitialPermissions();
@@ -56,12 +68,30 @@ toggleSettingsBtn.addEventListener('click', () => {
     saveSettings();
 });
 
-// Modul-Konfigurationsbereiche auf-/zuklappen (Akkordeon)
-btnToggleDisplayConfig.addEventListener('click', () => togglePanel(btnToggleDisplayConfig, panelDisplaySettings, 'display'));
-btnToggleMainConfig.addEventListener('click', () => togglePanel(btnToggleMainConfig, panelMainSettings, 'main'));
-btnToggleAnchorConfig.addEventListener('click', () => togglePanel(btnToggleAnchorConfig, panelAnchorSettings, 'anchor'));
-btnToggleMuteConfig.addEventListener('click', () => togglePanel(btnToggleMuteConfig, panelMuteSettings, 'mute'));
-btnToggleSmartConfig.addEventListener('click', () => togglePanel(btnToggleSmartConfig, panelSmartSettings, 'smart'));
+// Modul-Konfigurationsbereiche auf-/zuklappen (Akkordeon: sowohl über ⚙️-Button als auch über Klick auf die Kopfzeile)
+function bindAccordionHeader(btn, panel, key) {
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        togglePanel(btn, panel, key);
+    });
+    const header = btn.closest('.module-header');
+    if (header) {
+        header.style.cursor = 'pointer';
+        header.addEventListener('click', (e) => {
+            // Nicht aufklappen, wenn auf die "Aktiv"-Checkbox oder das Label geklickt wurde
+            if (e.target.closest('label') || e.target.tagName === 'INPUT' || e.target.closest('.config-btn')) {
+                return;
+            }
+            togglePanel(btn, panel, key);
+        });
+    }
+}
+
+bindAccordionHeader(btnToggleDisplayConfig, panelDisplaySettings, 'display');
+bindAccordionHeader(btnToggleMainConfig, panelMainSettings, 'main');
+bindAccordionHeader(btnToggleAnchorConfig, panelAnchorSettings, 'anchor');
+bindAccordionHeader(btnToggleMuteConfig, panelMuteSettings, 'mute');
+bindAccordionHeader(btnToggleSmartConfig, panelSmartSettings, 'smart');
 
 // Anzeige-Checkboxen
 chkExpert.addEventListener('change', () => { updateUIVisibility(); saveSettings(); });

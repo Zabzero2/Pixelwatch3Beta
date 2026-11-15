@@ -122,19 +122,19 @@ export function updateMonitorButtonUI() {
 }
 
 // Akkordeon-Logik: Beim Öffnen eines Moduls schließen sich die anderen automatisch
-const ALL_PANELS = [
-    { key: 'display', btn: btnToggleDisplayConfig, panel: panelDisplaySettings, stateProp: 'panelDisplayOpen' },
-    { key: 'main', btn: btnToggleMainConfig, panel: panelMainSettings, stateProp: 'panelMainOpen' },
-    { key: 'anchor', btn: btnToggleAnchorConfig, panel: panelAnchorSettings, stateProp: 'panelAnchorOpen' },
-    { key: 'mute', btn: btnToggleMuteConfig, panel: panelMuteSettings, stateProp: 'panelMuteOpen' },
-    { key: 'smart', btn: btnToggleSmartConfig, panel: panelSmartSettings, stateProp: 'panelSmartOpen' }
-];
-
 export function togglePanel(btn, panel, stateVarName) {
-    let isOpen = panel.style.display === 'flex';
+    const allPanels = [
+        { key: 'display', btn: btnToggleDisplayConfig, panel: panelDisplaySettings, stateProp: 'panelDisplayOpen' },
+        { key: 'main', btn: btnToggleMainConfig, panel: panelMainSettings, stateProp: 'panelMainOpen' },
+        { key: 'anchor', btn: btnToggleAnchorConfig, panel: panelAnchorSettings, stateProp: 'panelAnchorOpen' },
+        { key: 'mute', btn: btnToggleMuteConfig, panel: panelMuteSettings, stateProp: 'panelMuteOpen' },
+        { key: 'smart', btn: btnToggleSmartConfig, panel: panelSmartSettings, stateProp: 'panelSmartOpen' }
+    ];
+
+    const isOpen = panel.style.display === 'flex';
     const nextOpenState = !isOpen;
 
-    ALL_PANELS.forEach(item => {
+    allPanels.forEach(item => {
         if (item.key === stateVarName && nextOpenState) {
             item.panel.style.display = 'flex';
             item.btn.classList.add('open');

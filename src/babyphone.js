@@ -1,6 +1,6 @@
 // WebRTC Echtzeit-Babyphone (Sender auf dem Überwachungsgerät & Empfänger per 1-Klick-Link)
+// Lädt PeerJS verzögert (On-Demand), damit die Haupt-App niemals durch Netzwerk-/Bundler-Probleme blockiert wird.
 
-import { Peer } from 'peerjs';
 import { state } from './state.js';
 import { getRoomAudioStream } from './audio.js';
 import { sendTgLiveMessage, deleteTgMessage, sendTgTempNotice } from './telegram.js';
@@ -28,10 +28,48 @@ const ICE_SERVERS = [
     }
 ];
 
+let PeerClass = null;
 let senderPeer = null;
 let liveMicStream = null;
 let liveTgMessageId = null;
 let activeConnections = [];
+
+async function ensurePeerLoaded() {
+    if (PeerClass) return PeerClass;
+    if (typeof window !== 'undefined' && window.Peer) {
+        PeerClass = window.Peer;
+        return PeerClass;
+    }
+    // 1. Versuch: Über lokales Bundle (Vite)
+    try {
+        const mod = await import('peerjs');
+        PeerClass = mod.Peer || mod.default;
+        if (PeerClass) return PeerClass;
+    } catch (e) {}
+
+    // 2. Versuch: Über CDN (falls App direkt als statische HTML-Datei ohne Vite geöffnet wird)
+    try {
+        const mod = await import('https://esm.sh/peerjs@1.5.4');
+        PeerClass = mod.Peer || mod.default;
+        if (PeerClass) return PeerClass;
+    } catch (e) {}
+
+    // 3. Versuch: Klassisches Script-Tag Fallback
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+        script.onload = () => {
+            if (window.Peer) {
+                PeerClass = window.Peer;
+                resolve(PeerClass);
+            } else {
+                reject(new Error('PeerJS konnte nicht initialisiert werden.'));
+            }
+        };
+        script.onerror = () => reject(new Error('PeerJS konnte nicht geladen werden.'));
+        document.head.appendChild(script);
+    });
+}
 
 function generateRoomId() {
     const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
@@ -50,6 +88,14 @@ export async function startLiveBabyphone() {
     // Falls bereits eine Session läuft, diese zuerst sauber beenden
     await stopLiveBabyphone(false);
 
+    let PeerCtor;
+    try {
+        PeerCtor = await ensurePeerLoaded();
+    } catch (err) {
+        await sendTgTempNotice('❌ WebRTC-Modul konnte nicht geladen werden: ' + err.message, 8000);
+        return;
+    }
+
     let streamToUse = state.micStream;
     try {
         if (!streamToUse || streamToUse.getAudioTracks().length === 0 || streamToUse.getAudioTracks()[0].readyState === 'ended') {
@@ -63,7 +109,7 @@ export async function startLiveBabyphone() {
 
     const roomId = generateRoomId();
 
-    senderPeer = new Peer(roomId, {
+    senderPeer = new PeerCtor(roomId, {
         config: { iceServers: ICE_SERVERS }
     });
 
@@ -144,59 +190,64 @@ export async function stopLiveBabyphone(sendConfirmation = true) {
 // ============================================================================
 
 export function checkAndInitReceiverMode() {
-    const params = new URLSearchParams(window.location.search);
-    const listenRoomId = params.get('listen');
-    if (!listenRoomId) return false;
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const listenRoomId = params.get('listen');
+        if (!listenRoomId) return false;
 
-    // Normale Kamera-Oberfläche ausblenden und Babyphone-Empfänger anzeigen
-    const appShell = document.querySelector('.app-shell');
-    if (appShell) appShell.style.display = 'none';
+        // Normale Kamera-Oberfläche ausblenden und Babyphone-Empfänger anzeigen
+        const appShell = document.querySelector('.app-shell');
+        if (appShell) appShell.style.display = 'none';
 
-    const receiverDiv = document.createElement('div');
-    receiverDiv.className = 'babyphone-receiver';
-    receiverDiv.innerHTML = `
-        <div class="bp-card">
-            <div class="bp-badge" id="bpStatusBadge">🟡 Verbinde...</div>
-            <h2 class="bp-title">🔊 Live-Babyphone</h2>
-            <p class="bp-subtitle" id="bpStatusText">Stelle Direktverbindung zum Überwachungsgerät her...</p>
+        const receiverDiv = document.createElement('div');
+        receiverDiv.className = 'babyphone-receiver';
+        receiverDiv.innerHTML = `
+            <div class="bp-card">
+                <div class="bp-badge" id="bpStatusBadge">🟡 Verbinde...</div>
+                <h2 class="bp-title">🔊 Live-Babyphone</h2>
+                <p class="bp-subtitle" id="bpStatusText">Stelle Direktverbindung zum Überwachungsgerät her...</p>
 
-            <div class="bp-meter-wrap">
-                <div class="bp-meter-label">
-                    <span>Raum-Pegel (Echtzeit)</span>
-                    <span id="bpLevelVal">0 %</span>
+                <div class="bp-meter-wrap">
+                    <div class="bp-meter-label">
+                        <span>Raum-Pegel (Echtzeit)</span>
+                        <span id="bpLevelVal">0 %</span>
+                    </div>
+                    <div class="bp-meter-track">
+                        <div class="bp-meter-fill" id="bpMeterFill"></div>
+                    </div>
                 </div>
-                <div class="bp-meter-track">
-                    <div class="bp-meter-fill" id="bpMeterFill"></div>
+
+                <div class="slider-stack" style="margin-top: 6px;">
+                    <div class="slider-header">
+                        <span>Mikrofon-Verstärker (Boost)</span>
+                        <span class="slider-val-badge" id="bpGainVal">150 %</span>
+                    </div>
+                    <div class="slider-controls">
+                        <input type="range" id="bpGainSlider" min="50" max="400" step="10" value="150">
+                    </div>
                 </div>
+
+                <button id="bpUnmuteBtn" class="bp-play-btn" style="display: none;">
+                    🔊 Hier tippen, um Ton einzuschalten
+                </button>
+
+                <button id="bpStopBtn" class="bp-stop-btn">
+                    🔇 Babyphone beenden &amp; Chat aufräumen
+                </button>
             </div>
+            <audio id="bpRemoteAudio" autoplay playsinline></audio>
+        `;
+        document.body.appendChild(receiverDiv);
 
-            <div class="slider-stack" style="margin-top: 6px;">
-                <div class="slider-header">
-                    <span>Mikrofon-Verstärker (Boost)</span>
-                    <span class="slider-val-badge" id="bpGainVal">150 %</span>
-                </div>
-                <div class="slider-controls">
-                    <input type="range" id="bpGainSlider" min="50" max="400" step="10" value="150">
-                </div>
-            </div>
-
-            <button id="bpUnmuteBtn" class="bp-play-btn" style="display: none;">
-                🔊 Hier tippen, um Ton einzuschalten
-            </button>
-
-            <button id="bpStopBtn" class="bp-stop-btn">
-                🔇 Babyphone beenden &amp; Chat aufräumen
-            </button>
-        </div>
-        <audio id="bpRemoteAudio" autoplay playsinline></audio>
-    `;
-    document.body.appendChild(receiverDiv);
-
-    initReceiverConnection(listenRoomId);
-    return true;
+        initReceiverConnection(listenRoomId);
+        return true;
+    } catch (e) {
+        console.error('Fehler beim Prüfen des Receiver-Modus:', e);
+        return false;
+    }
 }
 
-function initReceiverConnection(roomId) {
+async function initReceiverConnection(roomId) {
     const statusBadge = document.getElementById('bpStatusBadge');
     const statusText = document.getElementById('bpStatusText');
     const meterFill = document.getElementById('bpMeterFill');
@@ -207,7 +258,16 @@ function initReceiverConnection(roomId) {
     const stopBtn = document.getElementById('bpStopBtn');
     const remoteAudio = document.getElementById('bpRemoteAudio');
 
-    let receiverPeer = new Peer({ config: { iceServers: ICE_SERVERS } });
+    let PeerCtor;
+    try {
+        PeerCtor = await ensurePeerLoaded();
+    } catch (err) {
+        statusBadge.innerText = '🔴 Verbindungsfehler';
+        statusText.innerText = 'WebRTC-Modul konnte nicht geladen werden: ' + err.message;
+        return;
+    }
+
+    let receiverPeer = new PeerCtor({ config: { iceServers: ICE_SERVERS } });
     let dataConn = null;
     let audioCtx = null;
     let gainNode = null;

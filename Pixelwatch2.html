@@ -12,6 +12,28 @@
 <link rel="manifest" href="manifest.json">
 
 <title>Pixel-Wächter Pro V2</title>
+<script>
+// Bereinigt veraltete Service-Worker-Caches (v1-v4), die alte CSS/JS-Dateien blockieren könnten
+(function() {
+  if ('caches' in window) {
+    caches.keys().then(function(keys) {
+      var hadOldCache = false;
+      var promises = keys.map(function(k) {
+        if (k !== 'pixel-waechter-v2-cache-v5') {
+          hadOldCache = true;
+          return caches.delete(k);
+        }
+      });
+      Promise.all(promises).then(function() {
+        if (hadOldCache && !sessionStorage.getItem('pw2_cache_healed_v5')) {
+          sessionStorage.setItem('pw2_cache_healed_v5', '1');
+          window.location.reload();
+        }
+      });
+    });
+  }
+})();
+</script>
 <link rel="stylesheet" href="./src/styles.css">
 </head>
 <body>
