@@ -150,15 +150,15 @@
                     <label>Anzahl Felder:</label>
                     <select id="boxCountSelect">
                         <option value="1">1 Feld</option>
-                        <option value="2" selected>2 Felder</option> 
+                        <option value="2">2 Felder</option> 
                         <option value="3">3 Felder</option>
-                        <option value="4">4 Felder</option>
+                        <option value="4" selected>4 Felder</option>
                     </select>
                 </div>
                 <div class="slider-row" id="rowSens">
-                    <label>Pixel-Helligkeit (Limit): <span id="valSens">30</span></label>
+                    <label>Pixel-Helligkeit (Limit): <span id="valSens">35</span></label>
                     <button class="adj-btn" id="sensMinus">-</button>
-                    <input type="range" id="slideSens" min="2" max="100" value="30">
+                    <input type="range" id="slideSens" min="2" max="100" value="35">
                     <button class="adj-btn" id="sensPlus">+</button>
                 </div>
                 <div class="slider-row" id="rowMass">
@@ -180,21 +180,21 @@
                     <button class="adj-btn" id="toleranzPlus">+</button>
                 </div>
                 <div class="slider-row">
-                    <label>Rahmen-Breite: <span id="valWidth">35</span></label>
+                    <label>Rahmen-Breite: <span id="valWidth">48</span></label>
                     <button class="adj-btn" id="widthMinus">-</button>
-                    <input type="range" id="slideWidth" min="5" max="100" value="35">
+                    <input type="range" id="slideWidth" min="5" max="100" value="48">
                     <button class="adj-btn" id="widthPlus">+</button>
                 </div>
                 <div class="slider-row">
-                    <label>Rahmen-Höhe: <span id="valHeight">20</span></label>
+                    <label>Rahmen-Höhe: <span id="valHeight">23</span></label>
                     <button class="adj-btn" id="heightMinus">-</button>
-                    <input type="range" id="slideHeight" min="5" max="50" value="20">
+                    <input type="range" id="slideHeight" min="5" max="50" value="23">
                     <button class="adj-btn" id="heightPlus">+</button>
                 </div>
                 <div class="slider-row" id="rowPulse">
-                    <label>Min. Takt-Punkte: <span id="valPulse">3</span></label>
+                    <label>Min. Takt-Punkte: <span id="valPulse">2</span></label>
                     <button class="adj-btn" id="pulseMinus">-</button>
-                    <input type="range" id="slidePulse" min="1" max="10" value="3">
+                    <input type="range" id="slidePulse" min="1" max="10" value="2">
                     <button class="adj-btn" id="pulsePlus">+</button>
                 </div>
                 <div class="slider-row">
@@ -248,7 +248,7 @@
 
         <div class="module-section sec-mute">
             <div class="module-header">
-                <span style="display: flex; align-items: center; gap: 10px;">Mute-Zone <label style="font-size:12px; font-weight:normal; cursor:pointer;"><input type="checkbox" id="chkMuteActive"> Aktiv</label></span>
+                <span style="display: flex; align-items: center; gap: 10px;">Mute-Zone <label style="font-size:12px; font-weight:normal; cursor:pointer;"><input type="checkbox" id="chkMuteActive" checked> Aktiv</label></span>
                 <button class="config-btn" id="btnToggleMuteConfig">⚙️</button>
             </div>
             <div class="module-body" id="panelMuteSettings" style="display: none;">
@@ -264,9 +264,9 @@
                     <button class="adj-btn" id="muteDriftPlus">+</button>
                 </div>
                 <div class="slider-row" id="rowMuteSens">
-                    <label>Toleranz: <span id="valMuteSens">30</span></label>
+                    <label>Toleranz: <span id="valMuteSens">15</span></label>
                     <button class="adj-btn" id="muteSensMinus">-</button>
-                    <input type="range" id="slideMuteSens" min="5" max="100" value="30">
+                    <input type="range" id="slideMuteSens" min="5" max="100" value="15">
                     <button class="adj-btn" id="muteSensPlus">+</button>
                 </div>
                 <div class="slider-row">

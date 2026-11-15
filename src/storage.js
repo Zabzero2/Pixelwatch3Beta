@@ -158,8 +158,10 @@ export function loadSettings() {
             if (s.weather) txtWeatherCities.value = s.weather;
         } else {
             chkExpert.checked = DEFAULTS.expert;
-            chkAnchorActive.checked = false;
-            chkMuteActive.checked = false;
+            chkAnchorActive.checked = DEFAULTS.anchorActive;
+            anchorBox.active = DEFAULTS.anchorActive;
+            chkMuteActive.checked = DEFAULTS.muteActive;
+            muteBox.active = DEFAULTS.muteActive;
         }
     } catch (e) {}
 
@@ -221,8 +223,8 @@ export function resetAnchorModule() {
     anchorBox.baseline = null;
     anchorBox.x = 200;
     anchorBox.y = 100;
-    chkAnchorActive.checked = false;
-    anchorBox.active = false;
+    chkAnchorActive.checked = DEFAULTS.anchorActive;
+    anchorBox.active = DEFAULTS.anchorActive;
     updateLabels();
     updateUIVisibility();
     saveSettings();
@@ -244,8 +246,8 @@ export function resetMuteModule() {
     muteBox.state = 'IDLE';
     muteBox.emptyStartTime = 0;
     muteBox.triggerStart = 0;
-    chkMuteActive.checked = false;
-    muteBox.active = false;
+    chkMuteActive.checked = DEFAULTS.muteActive;
+    muteBox.active = DEFAULTS.muteActive;
     updateLabels();
     updateUIVisibility();
     saveSettings();
