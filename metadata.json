@@ -1,0 +1,8 @@
+{
+  "name": "Pixel-Wächter Pro V2",
+  "description": "Optisches und akustisches Überwachungssystem mit Rhythmus-Erkennung, Anker-Referenz, Mute-Zone, Tarnmodus und Telegram-Integration.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

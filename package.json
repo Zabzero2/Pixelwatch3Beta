@@ -3,8 +3,9 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "dev": "vite --open /Pixelwatch2.html",
+    "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
+    "lint": "node --check src/main.js src/dom.js src/state.js src/ui.js src/audio.js src/weather.js src/telegram.js src/storage.js src/analyzer.js src/camera.js",
     "preview": "vite preview"
   },
   "devDependencies": {

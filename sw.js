@@ -1,7 +1,20 @@
-const CACHE_NAME = 'pixel-waechter-v2-cache-v3';
+const CACHE_NAME = 'pixel-waechter-v2-cache-v4';
 const urlsToCache = [
+  './',
+  './index.html',
   './Pixelwatch2.html',
-  './manifest.json'
+  './manifest.json',
+  './src/styles.css',
+  './src/main.js',
+  './src/dom.js',
+  './src/state.js',
+  './src/ui.js',
+  './src/storage.js',
+  './src/audio.js',
+  './src/weather.js',
+  './src/telegram.js',
+  './src/analyzer.js',
+  './src/camera.js'
 ];
 
 self.addEventListener('install', event => {
