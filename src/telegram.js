@@ -7,6 +7,7 @@ import {
 } from './dom.js';
 import { state, boxes, anchorBox, DEFAULTS } from './state.js';
 import { getRoomAudioStream } from './audio.js';
+import { updateAppVisuals } from './ui.js';
 
 const LIVE_LISTEN_OVERLAP_MS = 250;
 const LIVE_LISTEN_MAX_KEPT = 4;
@@ -217,6 +218,7 @@ export async function startLiveListen() {
     }
 
     await sendTgMessage(`🎧 Live-Mithören gestartet (${chunkSec}s-Schnipsel, Auto-Aus nach ${autoOffMin} Min.).\nSende /stop zum Beenden.`);
+    updateAppVisuals();
 
     // Auto-Abschaltung planen
     state.liveListenAutoOffTimer = setTimeout(() => {
@@ -321,6 +323,7 @@ export function stopLiveListen(isAutoOff = false, silent = false) {
 
     state.isLiveListening = false;
     state.liveListenSessionId++;
+    updateAppVisuals();
 
     if (state.liveListenNextTimer) {
         clearTimeout(state.liveListenNextTimer);

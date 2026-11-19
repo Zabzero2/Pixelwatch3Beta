@@ -2,6 +2,7 @@
 
 import {
     zoomHeader, canvas, startBtn, monitorBtn, cameraSelect,
+    modeBadge, modeBadgeText,
     chkExpert, chkAnchorDrift, chkMuteDrift,
     rowAnchorDriftSpeed, rowMuteDriftSpeed,
     chkTelegram, txtTelegramToken, txtTelegramChatId,
@@ -89,12 +90,34 @@ export function updateMaxDeltaLimitRange() {
     valMass.innerText = slideMass.value;
 }
 
+export function updateModeBadge() {
+    if (!modeBadge || !modeBadgeText) return;
+    const tgActive = chkTelegram.checked && txtTelegramToken.value.trim() !== '' && txtTelegramChatId.value.trim() !== '';
+
+    modeBadge.classList.remove('mode-normal', 'mode-silent', 'mode-audio', 'mode-listen');
+
+    if (state.isLiveListening) {
+        modeBadge.classList.add('mode-listen');
+        modeBadgeText.innerText = 'Live-Mithören';
+    } else if (chkAudioGuard.checked) {
+        modeBadge.classList.add('mode-audio');
+        modeBadgeText.innerText = 'Audio-Wächter';
+    } else if (selLocalSound.value === 'off' && tgActive) {
+        modeBadge.classList.add('mode-silent');
+        modeBadgeText.innerText = 'Silent-Wächter';
+    } else {
+        modeBadge.classList.add('mode-normal');
+        modeBadgeText.innerText = 'Normal';
+    }
+}
+
 export function updateAppVisuals() {
     if (isLocalMuted()) {
         document.body.classList.add('silent-mode-on');
     } else {
         document.body.classList.remove('silent-mode-on');
     }
+    updateModeBadge();
     updateStealthClock(true);
 }
 
@@ -120,6 +143,7 @@ export function updateMonitorButtonUI() {
         monitorBtn.style.background = "#dc3545";
         monitorBtn.classList.add("off");
     }
+    updateModeBadge();
     updateStealthClock(true);
 }
 

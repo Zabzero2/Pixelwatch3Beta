@@ -20,10 +20,14 @@ export const mainSettingsWrapper = document.getElementById('mainSettingsWrapper'
 export const helpBtn = document.getElementById('helpBtn');
 export const helpOverlay = document.getElementById('helpOverlay');
 export const closeHelpBtn = document.getElementById('closeHelpBtn');
+export const closeHelpTopBtn = document.getElementById('closeHelpTopBtn');
+export const modeBadge = document.getElementById('modeBadge');
+export const modeBadgeText = document.getElementById('modeBadgeText');
 
 export const chkExpert = document.getElementById('chkExpert');
 export const chkShowZoom = document.getElementById('chkShowZoom');
 export const chkShowCam = document.getElementById('chkShowCam');
+export const chkShowCamDpad = document.getElementById('chkShowCamDpad');
 export const chkShowDpad = document.getElementById('chkShowDpad');
 
 export const btnToggleDisplayConfig = document.getElementById('btnToggleDisplayConfig');

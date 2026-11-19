@@ -34,49 +34,57 @@
 
 <div id="helpOverlay" class="overlay">
     <div class="help-content">
-        <h2>Hilfe & Anleitung</h2>
-        <p>Der <b>Pixel-Wächter Pro V2</b> überwacht optische Helligkeitsschwankungen (Rhythmus-Erkennung) und akustische Signale vollautomatisch und sendet bei Bedarf Bilder, Videos oder Audio direkt über Telegram.</p>
-        
-        <h3 style="color: white; font-size: 16px; margin-bottom: 5px;">1. Schnellstart & Einrichtung</h3>
-        <ol>
-            <li><b>Berechtigungen erteilen:</b> Beim Öffnen fragt die App direkt nach Kamera- und Mikrofon-Zugriff. Erlaube beides, damit unterwegs auch Remote-Audio (<code>/audio</code> &amp; <code>/listen</code>) zuverlässig funktioniert.</li>
-            <li><b>Kamera starten:</b> Tippe oben auf <i>📷 Kamera Start</i>. Erst wenn die Kamera läuft, geht die Überwachung auf <b>SCHARF</b> (lässt sich jederzeit pausieren).</li>
-            <li><b>Mess-Felder ausrichten:</b> Tippe eine Box im Live-Bild oder in der Zoom-Vorschau an und verschiebe sie über den gewünschten Bereich. Über das kompakte <b>D-Pad</b> neben den Zoom-Feldern lassen sich Position, Breite und Höhe pixelgenau justieren.</li>
-            <li><b>Menü-Einstellungen:</b> Öffne <i>⚙️ Menü</i> für das übersichtliche Akkordeon-Menü (Anzeige, Mess-Felder, Anker, Mute-Zone, Smart-Modem).</li>
-        </ol>
+        <div class="help-header">
+            <h2>Hilfe &amp; Anleitung</h2>
+            <button id="closeHelpTopBtn" class="help-close-x" title="Schließen" aria-label="Schließen">✕</button>
+        </div>
 
-        <h3 style="color: white; font-size: 16px; margin-bottom: 5px;">2. Telegram Remote-Befehle &amp; Live-Mithören</h3>
-        <ul>
-            <li><code>/foto</code> – Sendet sofort ein aktuelles Live-Bild.</li>
-            <li><code>/video</code> oder <code>/video 30</code> – Nimmt ein Video auf (Standard 4s, max. 60s).</li>
-            <li><code>/audio</code> oder <code>/audio 30</code> – Sendet eine einmalige Sprachaufnahme aus dem Raum (Standard 10s, max. 60s).</li>
-            <li><code>/listen</code> – Startet das <b>Live-Mithören</b> in fortlaufenden, nahtlosen Audio-Schnipseln. Die Schnipsel-Länge (Standard: 10s) und die automatische Abschaltung (Standard: 5 Min.) stellst du über die Schieberegler im Menü unter <i>Smart-Modem &amp; Warnungen</i> ein. Die Schnipsel kommen stumm (ohne Benachrichtigungston) an, und ältere Schnipsel werden automatisch wieder aus dem Chat gelöscht.</li>
-            <li><code>/stop</code> – Beendet das Live-Mithören sofort und räumt die verbliebenen Schnipsel im Chat auf.</li>
-        </ul>
+        <div class="help-body">
+            <p>Der <b>Pixel-Wächter Pro V2</b> überwacht optische Helligkeitsschwankungen (Rhythmus-Erkennung) und akustische Signale vollautomatisch und sendet bei Bedarf Bilder, Videos oder Audio direkt über Telegram.</p>
+            
+            <h3 style="color: white; font-size: 16px; margin-bottom: 5px;">1. Schnellstart &amp; Einrichtung</h3>
+            <ol>
+                <li><b>Berechtigungen erteilen:</b> Beim Öffnen fragt die App direkt nach Kamera- und Mikrofon-Zugriff. Erlaube beides, damit unterwegs auch Remote-Audio (<code>/audio</code> &amp; <code>/listen</code>) zuverlässig funktioniert.</li>
+                <li><b>Kamera starten:</b> Tippe oben auf <i>📷 Kamera Start</i>. Erst wenn die Kamera läuft, geht die Überwachung auf <b>SCHARF</b> (lässt sich jederzeit pausieren).</li>
+                <li><b>Mess-Felder ausrichten:</b> Tippe eine Box im Live-Bild oder in der Zoom-Vorschau an und verschiebe sie über den gewünschten Bereich. Über das kompakte <b>D-Pad</b> neben den Zoom-Feldern lassen sich Position, Breite und Höhe pixelgenau justieren sowie das <b>Live-Bild</b> direkt ein- oder ausblenden.</li>
+                <li><b>Menü-Einstellungen:</b> Öffne <i>⚙️ Menü</i> für das übersichtliche Akkordeon-Menü (Anzeige, Mess-Felder, Anker, Mute-Zone, Smart-Modem).</li>
+            </ol>
 
-        <h3 style="color: white; font-size: 16px; margin-bottom: 5px;">3. Smart-Modem, Audio-Wächter &amp; Wetter</h3>
-        <ul>
-            <li><b>Telegram-Warnung:</b> Hinterlege Bot-Token und Chat-ID, um bei Alarmen automatisch Bilder/Videos zu erhalten und Remote-Befehle nutzen zu können.</li>
-            <li><b>Lokale Töne / Audio-Wächter:</b> Über die Auswahlbox bestimmst du, ob das Gerät lokal klingeln soll. Ist der <i>Audio-Wächter</i> aktiv, wird das Gerät zwingend stummgeschaltet (blaues Menü) und sendet bei Überschreitung der Audio-Schwelle automatisch eine 10s-Aufnahme per Telegram.</li>
-            <li><b>Wetter-Station:</b> Mehrere Orte trennst du mit Semikolon <code>;</code>. Für exakte GPS-Koordinaten oder eigene Namen nutze <code>Anzeigename=Suchbegriff oder GPS</code> (z.B. <code>Lauingen=48.57,10.43</code> oder <code>Zuhause=München</code>).</li>
-        </ul>
+            <h3 style="color: white; font-size: 16px; margin-bottom: 5px;">2. Telegram Remote-Befehle &amp; Live-Mithören</h3>
+            <ul>
+                <li><code>/foto</code> – Sendet sofort ein aktuelles Live-Bild.</li>
+                <li><code>/video</code> oder <code>/video 30</code> – Nimmt ein Video auf (Standard 4s, max. 60s).</li>
+                <li><code>/audio</code> oder <code>/audio 30</code> – Sendet eine einmalige Sprachaufnahme aus dem Raum (Standard 10s, max. 60s).</li>
+                <li><code>/listen</code> – Startet das <b>Live-Mithören</b> in fortlaufenden, nahtlosen Audio-Schnipseln. Die Schnipsel-Länge (Standard: 10s) und die automatische Abschaltung (Standard: 5 Min.) stellst du über die Schieberegler im Menü unter <i>Smart-Modem &amp; Warnungen</i> ein. Die Schnipsel kommen stumm (ohne Benachrichtigungston) an, und ältere Schnipsel werden automatisch wieder aus dem Chat gelöscht.</li>
+                <li><code>/stop</code> – Beendet das Live-Mithören sofort und räumt die verbliebenen Schnipsel im Chat auf.</li>
+            </ul>
 
-        <h3 style="color: white; font-size: 16px; margin-bottom: 5px;">4. Spezial-Module</h3>
-        <ul>
-            <li><b>Anker-Referenz:</b> Überwacht die Kamera-Position. Verrutscht das Gerät, schlägt das System Alarm und sendet ein Vorher/Nachher-Bild via Telegram.</li>
-            <li><b>Mute-Zone:</b> Schaltet Alarme automatisch für die eingestellte Mute-Dauer stumm, sobald im überwachten Referenzbereich eine Änderung erkannt wird.</li>
-        </ul>
+            <h3 style="color: white; font-size: 16px; margin-bottom: 5px;">3. Smart-Modem, Audio-Wächter &amp; Wetter</h3>
+            <ul>
+                <li><b>Telegram-Warnung:</b> Hinterlege Bot-Token und Chat-ID, um bei Alarmen automatisch Bilder/Videos zu erhalten und Remote-Befehle nutzen zu können.</li>
+                <li><b>Lokale Töne / Audio-Wächter:</b> Über die Auswahlbox bestimmst du, ob das Gerät lokal klingeln soll. Ist der <i>Audio-Wächter</i> aktiv, wird das Gerät zwingend stummgeschaltet (blaues Menü) und sendet bei Überschreitung der Audio-Schwelle automatisch eine 10s-Aufnahme per Telegram.</li>
+                <li><b>Wetter-Station:</b> Mehrere Orte trennst du mit Semikolon <code>;</code>. Für exakte GPS-Koordinaten oder eigene Namen nutze <code>Anzeigename=Suchbegriff oder GPS</code> (z.B. <code>Lauingen=48.57,10.43</code> oder <code>Zuhause=München</code>).</li>
+            </ul>
 
-        <h3 style="color: white; font-size: 16px; margin-bottom: 5px;">5. Tarnmodus (Uhr-Anzeige)</h3>
-        <p>Verdunkelt das Display unauffällig mit Uhrzeit und Wetter.</p>
-        <p><b>Farbcodes der Uhr:</b><br>
-        • <b style="color: white;">Weiß:</b> Normal aktiv (Lokaler Ton AN).<br>
-        • <b style="color: #ffdd77;">Gelb:</b> Silent-Wächter (Stumm, Warnungen nur über Telegram).<br>
-        • <b style="color: #88ccff;">Blau:</b> Audio-Wächter aktiv (Stumm, lauscht in den Raum).<br>
-        • <b style="color: #ffcccc;">Rosa:</b> Kamera oder Überwachung pausiert.<br>
-        <br><b>Steuerung:</b> Oberer Doppelpunkt = Audio-Wächter lautlos ein/ausschalten. Unterer Doppelpunkt = Tarnmodus beenden.</p>
+            <h3 style="color: white; font-size: 16px; margin-bottom: 5px;">4. Spezial-Module</h3>
+            <ul>
+                <li><b>Anker-Referenz:</b> Überwacht die Kamera-Position. Verrutscht das Gerät, schlägt das System Alarm und sendet ein Vorher/Nachher-Bild via Telegram.</li>
+                <li><b>Mute-Zone:</b> Schaltet Alarme automatisch für die eingestellte Mute-Dauer stumm, sobald im überwachten Referenzbereich eine Änderung erkannt wird.</li>
+            </ul>
 
-        <button id="closeHelpBtn" style="margin-top: 15px; width: 100%; background: #00aaff; padding: 12px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer;">Verstanden &amp; Schließen</button>
+            <h3 style="color: white; font-size: 16px; margin-bottom: 5px;">5. Tarnmodus (Uhr-Anzeige)</h3>
+            <p>Verdunkelt das Display unauffällig mit Uhrzeit und Wetter.</p>
+            <p><b>Farbcodes der Uhr:</b><br>
+            • <b style="color: white;">Weiß:</b> Normal aktiv (Lokaler Ton AN).<br>
+            • <b style="color: #ffdd77;">Gelb:</b> Silent-Wächter (Stumm, Warnungen nur über Telegram).<br>
+            • <b style="color: #88ccff;">Blau:</b> Audio-Wächter aktiv (Stumm, lauscht in den Raum).<br>
+            • <b style="color: #ffcccc;">Rosa:</b> Kamera oder Überwachung pausiert.<br>
+            <br><b>Steuerung:</b> Oberer Doppelpunkt = Audio-Wächter lautlos ein/ausschalten. Unterer Doppelpunkt = Tarnmodus beenden.</p>
+        </div>
+
+        <div class="help-footer">
+            <button id="closeHelpBtn" class="help-close-btn">Verstanden &amp; Schließen</button>
+        </div>
     </div>
 </div>
 
@@ -88,6 +96,10 @@
         <button id="activateStealthBtn">🌙 Tarnmodus</button>
         <button id="toggleSettingsBtn">⚙️ Menü</button>
         <button id="helpBtn">❓</button>
+        <div id="modeBadge" class="mode-badge mode-normal" title="Aktueller Betriebsmodus">
+            <span class="mode-dot"></span>
+            <span id="modeBadgeText">Normal</span>
+        </div>
     </div>
     <div class="stealth-hint">Tipp: Tarnmodus beenden durch Tippen auf den unteren Uhr-Punkt.</div>
 
@@ -98,7 +110,12 @@
         </div>
 
         <div class="dpad-container" id="dpadPanel">
-            <div class="dpad-header">🎯 Auswahl: <span id="selectedBoxId">1</span></div>
+            <div class="dpad-header">
+                <span>🎯 Auswahl: <span id="selectedBoxId">1</span></span>
+                <label class="dpad-live-toggle" title="Live-Bild ein- oder ausblenden">
+                    <input type="checkbox" id="chkShowCamDpad" checked> Live-Bild
+                </label>
+            </div>
             <div class="dpad-layout">
                 <!-- Richtungs-Kreuz -->
                 <div class="dpad-cross">

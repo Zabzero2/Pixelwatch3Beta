@@ -1,7 +1,7 @@
 // Speichern, Laden & Zurücksetzen der Einstellungen (LocalStorage)
 
 import {
-    chkExpert, chkShowZoom, chkShowCam, chkShowDpad,
+    chkExpert, chkShowZoom, chkShowCam, chkShowCamDpad, chkShowDpad,
     canvas, dpadPanel, mainSettingsWrapper, toggleSettingsBtn,
     panelDisplaySettings, panelMainSettings, panelAnchorSettings,
     panelMuteSettings, panelSmartSettings,
@@ -94,6 +94,7 @@ export function loadSettings() {
             if (s.showCamera !== undefined) {
                 state.showCamera = s.showCamera;
                 chkShowCam.checked = s.showCamera;
+                if (chkShowCamDpad) chkShowCamDpad.checked = s.showCamera;
                 canvas.style.display = state.showCamera ? 'block' : 'none';
             }
             if (s.dpadVisible !== undefined) {

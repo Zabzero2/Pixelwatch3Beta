@@ -3,8 +3,8 @@
 import {
     canvas, startBtn, monitorBtn, activateStealthBtn, stealthOverlay,
     exitStealthBtn, toggleAudioGuardBtnStealth, toggleSettingsBtn, mainSettingsWrapper,
-    helpBtn, helpOverlay, closeHelpBtn,
-    chkExpert, chkShowZoom, chkShowCam, chkShowDpad, dpadPanel,
+    helpBtn, helpOverlay, closeHelpBtn, closeHelpTopBtn,
+    chkExpert, chkShowZoom, chkShowCam, chkShowCamDpad, chkShowDpad, dpadPanel,
     btnToggleDisplayConfig, btnToggleMainConfig, btnToggleAnchorConfig,
     btnToggleMuteConfig, btnToggleSmartConfig,
     panelDisplaySettings, panelMainSettings, panelAnchorSettings,
@@ -68,11 +68,17 @@ chkShowZoom.addEventListener('change', (e) => {
     if (muteBox.zoomStatsDiv) muteBox.zoomStatsDiv.style.display = state.showZoomValues ? 'block' : 'none';
     saveSettings();
 });
-chkShowCam.addEventListener('change', (e) => {
-    state.showCamera = e.target.checked;
-    canvas.style.display = state.showCamera ? 'block' : 'none';
+function setShowCamera(visible) {
+    state.showCamera = visible;
+    chkShowCam.checked = visible;
+    if (chkShowCamDpad) chkShowCamDpad.checked = visible;
+    canvas.style.display = visible ? 'block' : 'none';
     saveSettings();
-});
+}
+chkShowCam.addEventListener('change', (e) => setShowCamera(e.target.checked));
+if (chkShowCamDpad) {
+    chkShowCamDpad.addEventListener('change', (e) => setShowCamera(e.target.checked));
+}
 chkShowDpad.addEventListener('change', (e) => {
     dpadPanel.style.display = e.target.checked ? 'flex' : 'none';
     saveSettings();
@@ -135,9 +141,22 @@ chkMuteActive.addEventListener('change', (e) => {
     createZoomDisplays();
 });
 
-// Hilfe-Overlay
-helpBtn.addEventListener('click', () => { helpOverlay.style.display = 'flex'; });
-closeHelpBtn.addEventListener('click', () => { helpOverlay.style.display = 'none'; });
+// Hilfe-Overlay (inkl. Hintergrund-Scroll-Sperre für Android Chrome)
+function closeHelpOverlay() {
+    helpOverlay.style.display = 'none';
+    document.body.style.overflow = '';
+}
+helpBtn.addEventListener('click', () => {
+    helpOverlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    const body = helpOverlay.querySelector('.help-body');
+    if (body) body.scrollTop = 0;
+});
+closeHelpBtn.addEventListener('click', closeHelpOverlay);
+if (closeHelpTopBtn) closeHelpTopBtn.addEventListener('click', closeHelpOverlay);
+helpOverlay.addEventListener('click', (e) => {
+    if (e.target === helpOverlay) closeHelpOverlay();
+});
 
 // +/- Buttons für alle Slider
 setupAdjBtn('sensMinus', 'sensPlus', 'slideSens');
