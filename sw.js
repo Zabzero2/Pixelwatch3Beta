@@ -1,9 +1,12 @@
-const CACHE_NAME = 'pixel-waechter-v2-cache-v5';
+const CACHE_NAME = 'vigilux-cache-v6';
 const urlsToCache = [
   './',
   './index.html',
   './Pixelwatch2.html',
   './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  './icon.png',
   './src/styles.css',
   './src/main.js',
   './src/dom.js',
@@ -13,7 +16,6 @@ const urlsToCache = [
   './src/audio.js',
   './src/weather.js',
   './src/telegram.js',
-  './src/babyphone.js',
   './src/analyzer.js',
   './src/camera.js'
 ];

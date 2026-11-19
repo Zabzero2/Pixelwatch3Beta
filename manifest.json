@@ -1,20 +1,22 @@
 {
-  "name": "Pixel-Wächter Pro V2",
-  "short_name": "PixelPro 2",
+  "name": "Vigilux",
+  "short_name": "Vigilux",
   "start_url": "./Pixelwatch2.html",
   "display": "fullscreen",
   "background_color": "#000000",
   "theme_color": "#1e1e1e",
   "icons": [
     {
-      "src": "./icon.png",
+      "src": "./icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "./icon.png",
+      "src": "./icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
