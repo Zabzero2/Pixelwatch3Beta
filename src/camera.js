@@ -9,7 +9,6 @@ import { createZoomDisplays, updateMonitorButtonUI } from './ui.js';
 import { initAudio, restartAudioSystem, stopAudioSystem, processAudio, getRoomAudioStream } from './audio.js';
 import { fetchWeather } from './weather.js';
 import { startTelegramPolling, stopTelegramPolling } from './telegram.js';
-import { stopLiveBabyphone } from './babyphone.js';
 import { analyzeAnchor, analyzeMute, analyzeBoxes, drawUI } from './analyzer.js';
 
 // Fragt direkt beim Start der Seite Kamera- UND Mikrofon-Berechtigung ab,
@@ -127,7 +126,6 @@ export function stopSystem() {
         video.srcObject.getTracks().forEach(t => t.stop());
         video.srcObject = null;
     }
-    stopLiveBabyphone(false);
     stopAudioSystem();
     stopTelegramPolling();
     if (state.wakeLock) {

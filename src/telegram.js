@@ -1,4 +1,4 @@
-// Telegram Bot-Kommunikation, Medienversand, Live-Babyphone & Remote-Befehle
+// Telegram Bot-Kommunikation, Medienversand & Remote-Befehle
 
 import {
     chkTelegram, txtTelegramToken, txtTelegramChatId,
@@ -6,7 +6,6 @@ import {
 } from './dom.js';
 import { state, boxes, anchorBox } from './state.js';
 import { getRoomAudioStream } from './audio.js';
-import { startLiveBabyphone, stopLiveBabyphone } from './babyphone.js';
 
 function getBestAudioRecorderOptions() {
     const candidates = [
@@ -24,70 +23,14 @@ function getBestAudioRecorderOptions() {
 }
 
 export async function sendTgMessage(text) {
-    if (!txtTelegramToken.value || !txtTelegramChatId.value) return null;
+    if (!txtTelegramToken.value || !txtTelegramChatId.value) return;
     try {
-        const res = await fetch(`https://api.telegram.org/bot${txtTelegramToken.value.trim()}/sendMessage`, {
+        await fetch(`https://api.telegram.org/bot${txtTelegramToken.value.trim()}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ chat_id: txtTelegramChatId.value.trim(), text: text })
         });
-        const data = await res.json();
-        return data.ok && data.result ? data.result.message_id : null;
-    } catch (e) {
-        return null;
-    }
-}
-
-export async function deleteTgMessage(messageId) {
-    if (!messageId || !txtTelegramToken.value || !txtTelegramChatId.value) return;
-    try {
-        await fetch(`https://api.telegram.org/bot${txtTelegramToken.value.trim()}/deleteMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: txtTelegramChatId.value.trim(),
-                message_id: messageId
-            })
-        });
     } catch (e) {}
-}
-
-export async function sendTgTempNotice(text, deleteAfterMs = 5000) {
-    const msgId = await sendTgMessage(text);
-    if (msgId && deleteAfterMs > 0) {
-        setTimeout(() => deleteTgMessage(msgId), deleteAfterMs);
-    }
-}
-
-export async function sendTgLiveMessage(listenUrl) {
-    if (!txtTelegramToken.value || !txtTelegramChatId.value) return null;
-    const token = txtTelegramToken.value.trim();
-    const chatId = txtTelegramChatId.value.trim();
-    const text = `🔴 LIVE-BABYPHONE BEREIT\n\nTippe auf den Button unten, um sofort in Echtzeit in den Raum zu hören.\n\n(Beenden im Player oder per /stop – diese Nachricht löscht sich danach automatisch.)`;
-
-    try {
-        // Zuerst mit schickem Inline-Button versuchen
-        const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: chatId,
-                text: text,
-                reply_markup: {
-                    inline_keyboard: [
-                        [{ text: '🔊 Live-Babyphone jetzt öffnen', url: listenUrl }]
-                    ]
-                }
-            })
-        });
-        const data = await res.json();
-        if (data.ok && data.result) {
-            return data.result.message_id;
-        }
-    } catch (e) {}
-
-    // Fallback (z.B. falls über lokale IP getestet wird, bei der Telegram Inline-Buttons ablehnt)
-    return await sendTgMessage(`${text}\n\n🔗 Direktlink:\n${listenUrl}`);
 }
 
 export async function sendTgMedia(endpoint, formData) {
@@ -106,7 +49,7 @@ export function recordAndSendVideo(boxId, isRemote = false, durationMs = 4000) {
     state.isRecordingVideo = true;
     let sec = durationMs / 1000;
     let caption = isRemote ? `🎥 Remote Live-Video (${sec}s)` : "🎥 Alarm Box " + boxId;
-    sendTgTempNotice(caption + " (Wird aufgezeichnet...)", durationMs + 2000);
+    sendTgMessage(caption + " (Wird aufgezeichnet...)");
 
     try {
         let stream;
@@ -150,7 +93,7 @@ export async function recordAndSendAudio(isRemote = false, durationMs = 10000) {
 
     let sec = durationMs / 1000;
     let caption = isRemote ? `🎙️ Remote Live-Audio (${sec}s)` : "🎙️ Audio-Alarm im Raum (10s)";
-    if (isRemote) sendTgTempNotice(caption + " (Wird aufgezeichnet...)", durationMs + 2000);
+    if (isRemote) sendTgMessage(caption + " (Wird aufgezeichnet...)");
 
     let activeStream = state.micStream;
     let tempStream = null;
@@ -260,11 +203,9 @@ async function pollTelegramLoop() {
                 state.tgUpdateOffset = item.update_id + 1;
                 if (item.message && item.message.chat.id.toString() === txtTelegramChatId.value.trim() && item.message.text) {
                     let text = item.message.text.trim();
-                    let lower = text.toLowerCase();
-
-                    if (lower === '/foto') {
+                    if (text === '/foto') {
                         sendTgPhoto("📸 Remote Live-Bild");
-                    } else if (lower.startsWith('/video')) {
+                    } else if (text.startsWith('/video')) {
                         let parts = text.split(' ');
                         let durationSec = 4; // Default: 4 Sekunden
                         if (parts.length > 1 && !isNaN(parts[1])) {
@@ -272,7 +213,7 @@ async function pollTelegramLoop() {
                             if (durationSec > 60) durationSec = 60; // Deckelung auf max 60s
                         }
                         recordAndSendVideo(null, true, durationSec * 1000);
-                    } else if (lower.startsWith('/audio')) {
+                    } else if (text.startsWith('/audio')) {
                         let parts = text.split(' ');
                         let durationSec = 10; // Default: 10 Sekunden
                         if (parts.length > 1 && !isNaN(parts[1])) {
@@ -280,10 +221,6 @@ async function pollTelegramLoop() {
                             if (durationSec > 60) durationSec = 60; // Deckelung auf max 60s
                         }
                         recordAndSendAudio(true, durationSec * 1000);
-                    } else if (lower === '/live' || lower === '/babyphone') {
-                        startLiveBabyphone();
-                    } else if (lower === '/stop') {
-                        stopLiveBabyphone(true);
                     }
                 }
             }

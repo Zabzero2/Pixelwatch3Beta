@@ -12,28 +12,6 @@
 <link rel="manifest" href="manifest.json">
 
 <title>Pixel-Wächter Pro V2</title>
-<script>
-// Bereinigt veraltete Service-Worker-Caches (v1-v4), die alte CSS/JS-Dateien blockieren könnten
-(function() {
-  if ('caches' in window) {
-    caches.keys().then(function(keys) {
-      var hadOldCache = false;
-      var promises = keys.map(function(k) {
-        if (k !== 'pixel-waechter-v2-cache-v5') {
-          hadOldCache = true;
-          return caches.delete(k);
-        }
-      });
-      Promise.all(promises).then(function() {
-        if (hadOldCache && !sessionStorage.getItem('pw2_cache_healed_v5')) {
-          sessionStorage.setItem('pw2_cache_healed_v5', '1');
-          window.location.reload();
-        }
-      });
-    });
-  }
-})();
-</script>
 <link rel="stylesheet" href="./src/styles.css">
 </head>
 <body>
@@ -70,7 +48,6 @@
         <ul>
             <li><b>Telegram-Warnung:</b> Hinterlege einen Bot, um bei Alarmen automatisch Medien (Bilder/Videos) aufs Handy zu erhalten.</li>
             <li><b>Remote-Befehle:</b> Sende <code>/foto</code>, <code>/video</code> oder <code>/audio</code> an deinen Bot. Für längere Aufnahmen nutze z.B. <code>/audio 30</code> oder <code>/video 30</code> (nimmt 30s auf, max 60s).</li>
-            <li><b>Echtzeit-Babyphone:</b> Sende <code>/live</code> (oder <code>/babyphone</code>) an deinen Bot, um einen 1-Klick-Echtzeit-Audiostream (inkl. Verstärker-Regler) zu erhalten. Mit <code>/stop</code> oder direkt im Player beendest du den Stream und räumst die Nachricht im Chat automatisch wieder auf.</li>
             <li><b>Lokale Töne / Audio-Wächter:</b> Über die Auswahlbox kannst du bestimmen, ob das Tablet bei Alarm klingeln soll. Ist der Audio-Wächter aktiv, wird das Gerät zwingend stummgeschaltet, damit der Raum überwacht werden kann (nur Telegram-Media). Der Stumm-Modus wird durch ein blaues Menü signalisiert.</li>
             <li><b>Wetter-Station:</b> Gebe Orte in die Einstellungen ein (mehrere Orte getrennt durch Semikolon <code>;</code>). Für exakte GPS-Standorte oder spezielle Suchen nutze das Format <code>Anzeigename=Suchbegriff oder GPS</code> (z.B. <code>Lauingen=48.57,10.43</code> oder <code>Zuhause=München</code>).</li>
         </ul>
