@@ -50,6 +50,10 @@ export const txtWeatherCities = document.getElementById('txtWeatherCities');
 export const weatherDisplay = document.getElementById('weatherDisplay');
 export const slideAudioThreshold = document.getElementById('slideAudioThreshold');
 export const valAudioThreshold = document.getElementById('valAudioThreshold');
+export const slideListenChunk = document.getElementById('slideListenChunk');
+export const valListenChunk = document.getElementById('valListenChunk');
+export const slideListenAutoOff = document.getElementById('slideListenAutoOff');
+export const valListenAutoOff = document.getElementById('valListenAutoOff');
 export const liveAudioLevel = document.getElementById('liveAudioLevel');
 export const micAlarmUI = document.getElementById('micAlarmUI');
 

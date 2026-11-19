@@ -517,3 +517,114 @@ video { display: none; }
     box-shadow: 0 0 15px red;
     animation: blink 1s infinite;
 }
+
+/* Live-Babyphone Empfänger UI (?listen=...) */
+.babyphone-receiver {
+    min-height: 92vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.bp-card {
+    width: 100%;
+    max-width: 420px;
+    background: #23272f;
+    border: 1px solid #343b46;
+    border-radius: 14px;
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.bp-badge {
+    align-self: center;
+    background: rgba(255, 204, 0, 0.15);
+    border: 1px solid #ffcc00;
+    color: #ffcc00;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 6px;
+}
+
+.bp-badge.live {
+    background: rgba(0, 255, 136, 0.15);
+    border-color: #00ff88;
+    color: #00ff88;
+}
+
+.bp-title {
+    margin: 0;
+    font-size: 22px;
+    color: #ffffff;
+}
+
+.bp-subtitle {
+    margin: -6px 0 4px 0;
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+.bp-meter-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 10px 12px;
+    border-radius: 8px;
+}
+
+.bp-meter-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #d1d5db;
+    font-weight: 600;
+}
+
+.bp-meter-track {
+    width: 100%;
+    height: 12px;
+    background: #14171c;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #343b46;
+}
+
+.bp-meter-fill {
+    width: 0%;
+    height: 100%;
+    background: #00ff88;
+    transition: width 0.08s linear, background 0.15s ease;
+}
+
+.bp-play-btn {
+    width: 100%;
+    padding: 14px;
+    background: #00aaff;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 8px;
+}
+.bp-play-btn:hover {
+    background: #008ecc;
+}
+
+.bp-stop-btn {
+    width: 100%;
+    padding: 13px;
+    background: #dc3545;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 8px;
+    margin-top: 4px;
+}
+.bp-stop-btn:hover {
+    background: #b02a37;
+}

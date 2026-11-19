@@ -8,7 +8,7 @@ import { state, FRAME_INTERVAL } from './state.js';
 import { createZoomDisplays, updateMonitorButtonUI } from './ui.js';
 import { initAudio, restartAudioSystem, stopAudioSystem, processAudio, getRoomAudioStream } from './audio.js';
 import { fetchWeather } from './weather.js';
-import { startTelegramPolling, stopTelegramPolling } from './telegram.js';
+import { startTelegramPolling, stopTelegramPolling, stopLiveListen } from './telegram.js';
 import { analyzeAnchor, analyzeMute, analyzeBoxes, drawUI } from './analyzer.js';
 
 // Fragt direkt beim Start der Seite Kamera- UND Mikrofon-Berechtigung ab,
@@ -127,6 +127,7 @@ export function stopSystem() {
         video.srcObject = null;
     }
     stopAudioSystem();
+    stopLiveListen(false, true);
     stopTelegramPolling();
     if (state.wakeLock) {
         try { state.wakeLock.release(); } catch (e) {}

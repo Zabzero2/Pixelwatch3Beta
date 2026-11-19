@@ -165,6 +165,6 @@ export function processAudio() {
             setTimeout(() => { micAlarmUI.style.display = 'none'; }, 4000);
         }
 
-        if (chkTelegram.checked) recordAndSendAudio(false, 10000); // 10 Sekunden Aufnahme
+        if (chkTelegram.checked && !state.isLiveListening) recordAndSendAudio(false, 10000); // 10 Sekunden Aufnahme
     }
 }

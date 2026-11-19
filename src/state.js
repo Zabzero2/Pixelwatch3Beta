@@ -10,7 +10,8 @@ export const DEFAULTS = {
     sens: 35, mass: 60, width: 48, height: 23, pulse: 2, hold: 6.0, count: 4, takt: 2000, toleranz: 10,
     anchorActive: false, anchorSens: 15, anchorW: 10, anchorH: 10, anchorDrift: true, anchorDriftSpeed: 1,
     muteActive: true, muteSens: 15, muteHold: 60, muteW: 9, muteH: 11, muteDrift: true, muteDriftSpeed: 1,
-    expert: false, audioThreshold: 25, tgVideoMode: 'box'
+    expert: false, audioThreshold: 25, tgVideoMode: 'box',
+    listenChunkSec: 10, listenAutoOffMin: 5
 };
 
 export const boxes = [
@@ -72,6 +73,17 @@ export const state = {
     tgUpdateOffset: 0,
     isPollingTelegram: false,
     tgPollTimeout: null,
+
+    // Live-Mithören (Telegram-Schnipsel)
+    isLiveListening: false,
+    liveListenSessionId: 0,
+    liveListenStream: null,
+    liveListenMessageIds: [],
+    liveListenRecorders: new Set(),
+    liveListenNextTimer: null,
+    liveListenAutoOffTimer: null,
+    liveListenStopTimers: new Set(),
+    liveListenCleanupTimer: null,
 
     // Frame Loop Variablen
     lastFrameTime: 0,

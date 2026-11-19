@@ -17,7 +17,7 @@ import {
     slideWidth, slideHeight, slidePulse, slideHold, boxCountSelect,
     slideAnchorSens, slideAnchorW, slideAnchorH, slideAnchorDrift,
     slideMuteSens, slideMuteHold, slideMuteW, slideMuteH, slideMuteDrift,
-    slideAudioThreshold
+    slideAudioThreshold, slideListenChunk, slideListenAutoOff
 } from './dom.js';
 import { state, boxes, anchorBox, muteBox } from './state.js';
 import {
@@ -159,6 +159,8 @@ setupAdjBtn('muteWMinus', 'muteWPlus', 'slideMuteW');
 setupAdjBtn('muteHMinus', 'muteHPlus', 'slideMuteH');
 setupAdjBtn('muteDriftMinus', 'muteDriftPlus', 'slideMuteDrift');
 setupAdjBtn('audioThresMinus', 'audioThresPlus', 'slideAudioThreshold');
+setupAdjBtn('listenChunkMinus', 'listenChunkPlus', 'slideListenChunk');
+setupAdjBtn('listenAutoOffMinus', 'listenAutoOffPlus', 'slideListenAutoOff');
 
 // Kamera-Wechsel & Zoom
 cameraSelect.addEventListener('change', () => {
@@ -226,6 +228,8 @@ slideHeight.addEventListener('input', () => {
     boxes.forEach(b => { b.h = parseInt(slideHeight.value); b.history = []; b.baseline = null; });
 });
 slideAudioThreshold.addEventListener('input', () => { updateLabels(); saveSettings(); });
+slideListenChunk.addEventListener('input', () => { updateLabels(); saveSettings(); });
+slideListenAutoOff.addEventListener('input', () => { updateLabels(); saveSettings(); });
 
 slideAnchorSens.addEventListener('input', () => { updateLabels(); saveSettings(); });
 slideAnchorW.addEventListener('input', () => { updateLabels(); saveSettings(); anchorBox.w = parseInt(slideAnchorW.value); anchorBox.baseline = null; });

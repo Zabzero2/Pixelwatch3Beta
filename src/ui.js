@@ -20,6 +20,8 @@ import {
     slideMuteW, valMuteW, slideMuteH, valMuteH,
     slideMuteDrift, valMuteDrift,
     slideAudioThreshold, valAudioThreshold,
+    slideListenChunk, valListenChunk,
+    slideListenAutoOff, valListenAutoOff,
     selectedBoxIdLabel
 } from './dom.js';
 import { state, boxes, anchorBox, muteBox, HIT_PAD } from './state.js';
@@ -293,6 +295,8 @@ export function updateLabels() {
     valMuteH.innerText = slideMuteH.value;
     valMuteDrift.innerText = slideMuteDrift.value;
     valAudioThreshold.innerText = slideAudioThreshold.value;
+    valListenChunk.innerText = slideListenChunk.value;
+    valListenAutoOff.innerText = slideListenAutoOff.value;
     updateMaxDeltaLimitRange();
 }
 

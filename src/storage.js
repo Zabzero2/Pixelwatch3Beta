@@ -14,7 +14,7 @@ import {
     slideMuteSens, slideMuteHold, slideMuteW, slideMuteH, chkMuteDrift, slideMuteDrift, chkMuteActive,
     chkTelegram, telegramSettingsBox, chkAudioGuard, selLocalSound,
     txtTelegramToken, txtTelegramChatId, selTgVideoMode,
-    slideAudioThreshold, txtWeatherCities
+    slideAudioThreshold, slideListenChunk, slideListenAutoOff, txtWeatherCities
 } from './dom.js';
 import { state, boxes, anchorBox, muteBox, DEFAULTS } from './state.js';
 import {
@@ -47,7 +47,9 @@ export function saveSettings() {
         telegram: chkTelegram.checked, audioGuard: chkAudioGuard.checked,
         localSound: realLocalSound,
         tgToken: txtTelegramToken.value.trim(), tgChat: txtTelegramChatId.value.trim(),
-        tgVideoMode: selTgVideoMode.value, audioThreshold: slideAudioThreshold.value, weather: txtWeatherCities.value.trim()
+        tgVideoMode: selTgVideoMode.value, audioThreshold: slideAudioThreshold.value,
+        listenChunkSec: slideListenChunk.value, listenAutoOffMin: slideListenAutoOff.value,
+        weather: txtWeatherCities.value.trim()
     };
     localStorage.setItem('pixel_settings_v2', JSON.stringify(settings));
 }
@@ -156,6 +158,8 @@ export function loadSettings() {
             if (s.tgChat) txtTelegramChatId.value = s.tgChat;
             if (s.tgVideoMode) selTgVideoMode.value = s.tgVideoMode;
             if (s.audioThreshold) slideAudioThreshold.value = s.audioThreshold;
+            if (s.listenChunkSec) slideListenChunk.value = s.listenChunkSec;
+            if (s.listenAutoOffMin) slideListenAutoOff.value = s.listenAutoOffMin;
             if (s.weather) txtWeatherCities.value = s.weather;
         } else {
             chkExpert.checked = DEFAULTS.expert;
@@ -163,6 +167,8 @@ export function loadSettings() {
             anchorBox.active = DEFAULTS.anchorActive;
             chkMuteActive.checked = DEFAULTS.muteActive;
             muteBox.active = DEFAULTS.muteActive;
+            slideListenChunk.value = DEFAULTS.listenChunkSec;
+            slideListenAutoOff.value = DEFAULTS.listenAutoOffMin;
         }
     } catch (e) {}
 

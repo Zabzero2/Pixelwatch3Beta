@@ -2,10 +2,14 @@
 
 import {
     chkTelegram, txtTelegramToken, txtTelegramChatId,
-    selTgVideoMode, canvas, recordCanvas
+    selTgVideoMode, slideListenChunk, slideListenAutoOff,
+    canvas, recordCanvas
 } from './dom.js';
-import { state, boxes, anchorBox } from './state.js';
+import { state, boxes, anchorBox, DEFAULTS } from './state.js';
 import { getRoomAudioStream } from './audio.js';
+
+const LIVE_LISTEN_OVERLAP_MS = 250;
+const LIVE_LISTEN_MAX_KEPT = 4;
 
 function getBestAudioRecorderOptions() {
     const candidates = [
@@ -22,24 +26,48 @@ function getBestAudioRecorderOptions() {
     return { audioBitsPerSecond: 96000 };
 }
 
-export async function sendTgMessage(text) {
-    if (!txtTelegramToken.value || !txtTelegramChatId.value) return;
+export async function sendTgMessage(text, disableNotification = false) {
+    if (!txtTelegramToken.value || !txtTelegramChatId.value) return null;
     try {
-        await fetch(`https://api.telegram.org/bot${txtTelegramToken.value.trim()}/sendMessage`, {
+        const res = await fetch(`https://api.telegram.org/bot${txtTelegramToken.value.trim()}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: txtTelegramChatId.value.trim(), text: text })
+            body: JSON.stringify({
+                chat_id: txtTelegramChatId.value.trim(),
+                text: text,
+                disable_notification: disableNotification
+            })
         });
-    } catch (e) {}
+        return await res.json();
+    } catch (e) {
+        return null;
+    }
 }
 
 export async function sendTgMedia(endpoint, formData) {
-    if (!txtTelegramToken.value || !txtTelegramChatId.value) return;
+    if (!txtTelegramToken.value || !txtTelegramChatId.value) return null;
     formData.append("chat_id", txtTelegramChatId.value.trim());
     try {
-        await fetch(`https://api.telegram.org/bot${txtTelegramToken.value.trim()}/${endpoint}`, {
+        const res = await fetch(`https://api.telegram.org/bot${txtTelegramToken.value.trim()}/${endpoint}`, {
             method: 'POST',
             body: formData
+        });
+        return await res.json();
+    } catch (e) {
+        return null;
+    }
+}
+
+export async function deleteTgMessage(messageId) {
+    if (!messageId || !txtTelegramToken.value || !txtTelegramChatId.value) return;
+    try {
+        await fetch(`https://api.telegram.org/bot${txtTelegramToken.value.trim()}/deleteMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: txtTelegramChatId.value.trim(),
+                message_id: messageId
+            })
         });
     } catch (e) {}
 }
@@ -88,7 +116,14 @@ export function recordAndSendVideo(boxId, isRemote = false, durationMs = 4000) {
 }
 
 export async function recordAndSendAudio(isRemote = false, durationMs = 10000) {
-    if (state.isRecordingAudio || !chkTelegram.checked) return;
+    if (!chkTelegram.checked) return;
+    if (state.isLiveListening) {
+        if (isRemote) {
+            sendTgMessage("ℹ️ Live-Mithören läuft bereits. Sende zuerst /stop für eine Einzelaufnahme.");
+        }
+        return;
+    }
+    if (state.isRecordingAudio) return;
     state.isRecordingAudio = true;
 
     let sec = durationMs / 1000;
@@ -131,6 +166,207 @@ export async function recordAndSendAudio(isRemote = false, durationMs = 10000) {
             tempStream.getTracks().forEach(t => t.stop());
         }
         setTimeout(() => { state.isRecordingAudio = false; }, 5000);
+    }
+}
+
+export async function startLiveListen() {
+    if (!chkTelegram.checked || !txtTelegramToken.value.trim() || !txtTelegramChatId.value.trim()) return;
+    if (state.isLiveListening) {
+        sendTgMessage("ℹ️ Live-Mithören läuft bereits. Sende /stop zum Beenden.");
+        return;
+    }
+
+    // Eventuell noch wartende Nachlauf-Löschung einer vorherigen Auto-Abschaltung sofort abschließen
+    if (state.liveListenCleanupTimer) {
+        clearTimeout(state.liveListenCleanupTimer);
+        state.liveListenCleanupTimer = null;
+    }
+    if (state.liveListenMessageIds.length > 0) {
+        const leftoverIds = state.liveListenMessageIds.splice(0);
+        leftoverIds.forEach(id => deleteTgMessage(id));
+    }
+
+    const chunkSec = Math.max(5, Math.min(30, parseInt(slideListenChunk.value) || DEFAULTS.listenChunkSec));
+    const autoOffMin = Math.max(1, Math.min(30, parseInt(slideListenAutoOff.value) || DEFAULTS.listenAutoOffMin));
+    const chunkMs = chunkSec * 1000;
+
+    state.isLiveListening = true;
+    const sessionId = ++state.liveListenSessionId;
+
+    try {
+        if (state.micStream && state.micStream.active && typeof state.micStream.clone === 'function') {
+            state.liveListenStream = state.micStream.clone();
+        } else {
+            state.liveListenStream = await getRoomAudioStream();
+        }
+    } catch (e) {
+        if (sessionId === state.liveListenSessionId) {
+            state.isLiveListening = false;
+            sendTgMessage("⚠️ Live-Mithören konnte nicht gestartet werden (Mikrofon nicht verfügbar).");
+        }
+        return;
+    }
+
+    // Falls während des Mikrofon-Öffnens bereits /stop kam
+    if (!state.isLiveListening || sessionId !== state.liveListenSessionId) {
+        if (state.liveListenStream) {
+            state.liveListenStream.getTracks().forEach(t => t.stop());
+            state.liveListenStream = null;
+        }
+        return;
+    }
+
+    await sendTgMessage(`🎧 Live-Mithören gestartet (${chunkSec}s-Schnipsel, Auto-Aus nach ${autoOffMin} Min.).\nSende /stop zum Beenden.`);
+
+    // Auto-Abschaltung planen
+    state.liveListenAutoOffTimer = setTimeout(() => {
+        if (state.isLiveListening && state.liveListenSessionId === sessionId) {
+            stopLiveListen(true, false);
+        }
+    }, autoOffMin * 60 * 1000);
+
+    let chunkIndex = 0;
+
+    const startNextChunk = () => {
+        if (!state.isLiveListening || sessionId !== state.liveListenSessionId) return;
+        if (!state.liveListenStream || !state.liveListenStream.active) {
+            stopLiveListen(false, false);
+            return;
+        }
+
+        const currentIndex = ++chunkIndex;
+        let recorder;
+        try {
+            recorder = new MediaRecorder(state.liveListenStream, getBestAudioRecorderOptions());
+        } catch (e) {
+            stopLiveListen(false, false);
+            return;
+        }
+
+        const chunks = [];
+        state.liveListenRecorders.add(recorder);
+
+        recorder.ondataavailable = (e) => {
+            if (e.data && e.data.size > 0) chunks.push(e.data);
+        };
+
+        recorder.onstop = async () => {
+            state.liveListenRecorders.delete(recorder);
+            if (!state.isLiveListening || sessionId !== state.liveListenSessionId) return;
+            if (chunks.length === 0) return;
+
+            const mimeType = recorder.mimeType || 'audio/webm';
+            const blob = new Blob(chunks, { type: mimeType });
+            if (blob.size < 200) return;
+
+            const fd = new FormData();
+            fd.append("voice", blob, `live_${currentIndex}.ogg`);
+            fd.append("caption", `🎙️ Live #${currentIndex}`);
+            fd.append("disable_notification", "true");
+
+            const res = await sendTgMedia("sendVoice", fd);
+            const msgId = res && res.ok && res.result ? res.result.message_id : null;
+            if (!msgId) return;
+
+            // Falls während des Uploads gestoppt wurde
+            if (!state.isLiveListening || sessionId !== state.liveListenSessionId) {
+                if (state.liveListenCleanupTimer) {
+                    // Auto-Aus Nachlaufzeit aktiv -> mit in die Aufräum-Liste aufnehmen
+                    state.liveListenMessageIds.push(msgId);
+                } else {
+                    // Manuell gestoppt -> sofort löschen
+                    deleteTgMessage(msgId);
+                }
+                return;
+            }
+
+            state.liveListenMessageIds.push(msgId);
+            while (state.liveListenMessageIds.length > LIVE_LISTEN_MAX_KEPT) {
+                const oldestId = state.liveListenMessageIds.shift();
+                deleteTgMessage(oldestId);
+            }
+        };
+
+        recorder.start(250);
+
+        // Ping-Pong: Nächsten Recorder 250ms vor Ende starten, damit keine Lücke entsteht
+        const nextDelay = Math.max(1000, chunkMs - LIVE_LISTEN_OVERLAP_MS);
+        state.liveListenNextTimer = setTimeout(() => {
+            startNextChunk();
+        }, nextDelay);
+
+        // Aktuellen Recorder nach voller Schnipsel-Länge stoppen
+        const stopTimer = setTimeout(() => {
+            state.liveListenStopTimers.delete(stopTimer);
+            if (recorder.state !== 'inactive') {
+                try { recorder.stop(); } catch (e) {}
+            }
+        }, chunkMs);
+        state.liveListenStopTimers.add(stopTimer);
+    };
+
+    startNextChunk();
+}
+
+export function stopLiveListen(isAutoOff = false, silent = false) {
+    if (!state.isLiveListening) {
+        if (!isAutoOff && !silent) {
+            sendTgMessage("ℹ️ Live-Mithören ist aktuell nicht aktiv.");
+        }
+        return;
+    }
+
+    const chunkSec = Math.max(5, Math.min(30, parseInt(slideListenChunk.value) || DEFAULTS.listenChunkSec));
+    const autoOffMin = Math.max(1, Math.min(30, parseInt(slideListenAutoOff.value) || DEFAULTS.listenAutoOffMin));
+
+    state.isLiveListening = false;
+    state.liveListenSessionId++;
+
+    if (state.liveListenNextTimer) {
+        clearTimeout(state.liveListenNextTimer);
+        state.liveListenNextTimer = null;
+    }
+    if (state.liveListenAutoOffTimer) {
+        clearTimeout(state.liveListenAutoOffTimer);
+        state.liveListenAutoOffTimer = null;
+    }
+    state.liveListenStopTimers.forEach(t => clearTimeout(t));
+    state.liveListenStopTimers.clear();
+
+    state.liveListenRecorders.forEach(rec => {
+        if (rec.state !== 'inactive') {
+            try { rec.stop(); } catch (e) {}
+        }
+    });
+    state.liveListenRecorders.clear();
+
+    if (state.liveListenStream) {
+        state.liveListenStream.getTracks().forEach(t => t.stop());
+        state.liveListenStream = null;
+    }
+
+    if (isAutoOff) {
+        if (!silent) {
+            sendTgMessage(`⏱️ Live-Mithören automatisch nach ${autoOffMin} Min. beendet. Die letzten Schnipsel werden in Kürze entfernt.`);
+        }
+        // Kurze Nachlaufzeit, damit der letzte Schnipsel noch zu Ende gehört werden kann
+        if (state.liveListenCleanupTimer) clearTimeout(state.liveListenCleanupTimer);
+        const graceMs = Math.max(20000, chunkSec * 2000);
+        state.liveListenCleanupTimer = setTimeout(() => {
+            state.liveListenCleanupTimer = null;
+            const ids = state.liveListenMessageIds.splice(0);
+            ids.forEach(id => deleteTgMessage(id));
+        }, graceMs);
+    } else {
+        if (state.liveListenCleanupTimer) {
+            clearTimeout(state.liveListenCleanupTimer);
+            state.liveListenCleanupTimer = null;
+        }
+        const ids = state.liveListenMessageIds.splice(0);
+        ids.forEach(id => deleteTgMessage(id));
+        if (!silent) {
+            sendTgMessage("⏹️ Live-Mithören beendet. Chat wurde aufgeräumt.");
+        }
     }
 }
 
@@ -221,6 +457,11 @@ async function pollTelegramLoop() {
                             if (durationSec > 60) durationSec = 60; // Deckelung auf max 60s
                         }
                         recordAndSendAudio(true, durationSec * 1000);
+                    } else if (text === '/listen' || text.startsWith('/listen ') || text.startsWith('/listen@')) {
+                        // Schnipselgröße wird ausschließlich über den Schieberegler im App-Menü gesteuert
+                        startLiveListen();
+                    } else if (text === '/stop' || text.startsWith('/stop@')) {
+                        stopLiveListen(false, false);
                     }
                 }
             }
