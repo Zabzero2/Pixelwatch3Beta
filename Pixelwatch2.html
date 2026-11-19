@@ -74,12 +74,12 @@
 
             <h3 style="color: white; font-size: 16px; margin-bottom: 5px;">5. Tarnmodus (Uhr-Anzeige)</h3>
             <p>Verdunkelt das Display unauffällig mit Uhrzeit und Wetter.</p>
-            <p><b>Farbcodes der Uhr:</b><br>
-            • <b style="color: white;">Weiß:</b> Normal aktiv (Lokaler Ton AN).<br>
-            • <b style="color: #ffdd77;">Gelb:</b> Silent-Wächter (Stumm, Warnungen nur über Telegram).<br>
-            • <b style="color: #88ccff;">Blau:</b> Audio-Wächter aktiv (Stumm, lauscht in den Raum).<br>
-            • <b style="color: #ffcccc;">Rosa:</b> Kamera oder Überwachung pausiert.<br>
-            <br><b>Steuerung:</b> Oberer Doppelpunkt = Audio-Wächter lautlos ein/ausschalten. Unterer Doppelpunkt = Tarnmodus beenden.</p>
+            <p><b>Farbcodes (Uhr &amp; Status-Anzeige):</b><br>
+            • <b style="color: white;">Weiß (Lokal):</b> Aktiv mit lokalem Alarmton.<br>
+            • <b style="color: #ffdd77;">Gelb (Silent):</b> Stumm, Warnungen nur über Telegram.<br>
+            • <b style="color: #88ccff;">Blau (Audio):</b> Stumm, Raum-Mikrofon lauscht.<br>
+            • <b style="color: #ff7b7b;">Rot / Rosa (Aus / Pausiert):</b> Kamera aus oder Überwachung pausiert.<br>
+            <br><b>Steuerung:</b> Oberer Doppelpunkt = Audio-Modus lautlos ein/ausschalten. Unterer Doppelpunkt = Tarnmodus beenden.</p>
         </div>
 
         <div class="help-footer">
@@ -96,9 +96,9 @@
         <button id="activateStealthBtn">🌙 Tarnmodus</button>
         <button id="toggleSettingsBtn">⚙️ Menü</button>
         <button id="helpBtn">❓</button>
-        <div id="modeBadge" class="mode-badge mode-normal" title="Aktueller Betriebsmodus">
+        <div id="modeBadge" class="mode-badge mode-off" title="Aktueller Betriebsmodus">
             <span class="mode-dot"></span>
-            <span id="modeBadgeText">Normal</span>
+            <span id="modeBadgeText">Aus</span>
         </div>
     </div>
     <div class="stealth-hint">Tipp: Tarnmodus beenden durch Tippen auf den unteren Uhr-Punkt.</div>

@@ -76,77 +76,95 @@ button:active {
     transform: scale(0.98);
 }
 
-#startBtn {
-    background: #2b6cb0;
-}
-#startBtn.running {
-    background: #2f855a;
-}
-#monitorBtn {
-    background: #28a745;
-    color: white;
-}
-#monitorBtn.off {
-    background: #dc3545;
-    color: white;
-}
-#activateStealthBtn {
+#startBtn,
+#monitorBtn,
+#activateStealthBtn,
+#toggleSettingsBtn,
+#helpBtn {
     background: #374151;
     border-color: #4b5563;
+    color: #e5e7eb;
+}
+#startBtn:hover,
+#monitorBtn:hover,
+#activateStealthBtn:hover,
+#toggleSettingsBtn:hover,
+#helpBtn:hover {
+    background: #434d5e;
+    border-color: #5b6678;
+}
+#startBtn.running,
+#monitorBtn.active-btn,
+#toggleSettingsBtn.active-btn {
+    background: #4b5563;
+    border-color: #6b7280;
+    color: #ffffff;
+}
+#monitorBtn.off {
+    background: #2b313c;
+    border-color: #3f4756;
+    color: #b8c0cc;
 }
 #toggleSettingsBtn {
-    background: #374151;
     padding: 10px 14px;
 }
-#toggleSettingsBtn.active-btn {
-    background: #00aaff;
-    color: #fff;
-}
 #helpBtn {
-    background: #17a2b8;
     padding: 10px 13px;
 }
 
-/* Kompakte Modus-Anzeige in der oberen Leiste */
+/* Kompakte, auffällige Modus-Anzeige in der oberen Leiste */
 .mode-badge {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    padding: 8px 11px;
+    gap: 8px;
+    padding: 9px 14px;
     border-radius: 8px;
-    font-size: 12.5px;
-    font-weight: 600;
-    border: 1px solid #4b5563;
-    background: rgba(255, 255, 255, 0.06);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    border: 1.5px solid #4b5563;
+    background: rgba(255, 255, 255, 0.08);
     color: #f0f4f8;
     white-space: nowrap;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 .mode-dot {
-    width: 8px;
-    height: 8px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
     background: currentColor;
+    box-shadow: 0 0 8px currentColor;
     flex-shrink: 0;
 }
-.mode-badge.mode-normal {
-    border-color: #6b7280;
-    background: rgba(255, 255, 255, 0.07);
-    color: #f0f4f8;
+.mode-badge.mode-off {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.2);
+    color: #ff7b7b;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.22);
+}
+.mode-badge.mode-local {
+    border-color: #e5e7eb;
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.14);
 }
 .mode-badge.mode-silent {
-    border-color: #d4a72c;
-    background: rgba(255, 221, 119, 0.13);
+    border-color: #e0b330;
+    background: rgba(255, 221, 119, 0.18);
     color: #ffdd77;
+    box-shadow: 0 0 12px rgba(255, 221, 119, 0.2);
 }
 .mode-badge.mode-audio {
     border-color: #3b82f6;
-    background: rgba(136, 204, 255, 0.15);
+    background: rgba(136, 204, 255, 0.2);
     color: #88ccff;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
 }
 .mode-badge.mode-listen {
     border-color: #10b981;
-    background: rgba(0, 255, 136, 0.14);
+    background: rgba(0, 255, 136, 0.18);
     color: #00ff88;
+    box-shadow: 0 0 12px rgba(0, 255, 136, 0.24);
 }
 
 .stealth-hint {

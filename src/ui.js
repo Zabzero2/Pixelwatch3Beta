@@ -94,20 +94,26 @@ export function updateModeBadge() {
     if (!modeBadge || !modeBadgeText) return;
     const tgActive = chkTelegram.checked && txtTelegramToken.value.trim() !== '' && txtTelegramChatId.value.trim() !== '';
 
-    modeBadge.classList.remove('mode-normal', 'mode-silent', 'mode-audio', 'mode-listen');
+    modeBadge.classList.remove('mode-off', 'mode-local', 'mode-silent', 'mode-audio', 'mode-listen');
 
-    if (state.isLiveListening) {
+    if (!state.isRunning) {
+        modeBadge.classList.add('mode-off');
+        modeBadgeText.innerText = 'Aus';
+    } else if (state.isLiveListening) {
         modeBadge.classList.add('mode-listen');
-        modeBadgeText.innerText = 'Live-Mithören';
+        modeBadgeText.innerText = 'Live-Audio';
+    } else if (!state.isMonitoring) {
+        modeBadge.classList.add('mode-off');
+        modeBadgeText.innerText = 'Pausiert';
     } else if (chkAudioGuard.checked) {
         modeBadge.classList.add('mode-audio');
-        modeBadgeText.innerText = 'Audio-Wächter';
+        modeBadgeText.innerText = 'Audio';
     } else if (selLocalSound.value === 'off' && tgActive) {
         modeBadge.classList.add('mode-silent');
-        modeBadgeText.innerText = 'Silent-Wächter';
+        modeBadgeText.innerText = 'Silent';
     } else {
-        modeBadge.classList.add('mode-normal');
-        modeBadgeText.innerText = 'Normal';
+        modeBadge.classList.add('mode-local');
+        modeBadgeText.innerText = 'Lokal';
     }
 }
 
@@ -128,11 +134,11 @@ export function updateMonitorButtonUI() {
 
         if (state.isMonitoring) {
             monitorBtn.innerText = "🛡️ Überwachung: SCHARF";
-            monitorBtn.style.background = "";
             monitorBtn.classList.remove("off");
+            monitorBtn.classList.add("active-btn");
         } else {
             monitorBtn.innerText = "⏸ Überwachung: PAUSIERT";
-            monitorBtn.style.background = "#dc3545";
+            monitorBtn.classList.remove("active-btn");
             monitorBtn.classList.add("off");
         }
     } else {
@@ -140,7 +146,7 @@ export function updateMonitorButtonUI() {
         startBtn.classList.remove("running");
 
         monitorBtn.innerText = "⚠️ Überwachung: AUS (Kamera starten)";
-        monitorBtn.style.background = "#dc3545";
+        monitorBtn.classList.remove("active-btn");
         monitorBtn.classList.add("off");
     }
     updateModeBadge();
