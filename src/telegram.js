@@ -461,12 +461,24 @@ function sendTgHelpMessage() {
     sendTgMessage(helpText);
 }
 
+let tgPollSessionId = 0;
+let tgPollAbortController = null;
+
 // Überspringt beim Kamerastart alle älteren, aufgelaufenen Befehle aus der Zeit als die Kamera aus war
-async function flushOldTelegramUpdates() {
+async function flushOldTelegramUpdates(sessionId) {
     if (!chkTelegram.checked || !txtTelegramToken.value.trim()) return;
     try {
-        const res = await fetch(`https://api.telegram.org/bot${txtTelegramToken.value.trim()}/getUpdates?offset=-1&timeout=0`);
+        if (tgPollAbortController) {
+            try { tgPollAbortController.abort(); } catch (e) {}
+        }
+        const controller = new AbortController();
+        tgPollAbortController = controller;
+        const res = await fetch(
+            `https://api.telegram.org/bot${txtTelegramToken.value.trim()}/getUpdates?offset=-1&timeout=0`,
+            { signal: controller.signal }
+        );
         const data = await res.json();
+        if (sessionId !== tgPollSessionId) return;
         if (data.ok && data.result && data.result.length > 0) {
             const latest = data.result[data.result.length - 1];
             state.tgUpdateOffset = latest.update_id + 1;
@@ -475,38 +487,51 @@ async function flushOldTelegramUpdates() {
 }
 
 export function stopTelegramPolling() {
+    tgPollSessionId++;
     state.isPollingTelegram = false;
     if (state.tgPollTimeout) {
         clearTimeout(state.tgPollTimeout);
         state.tgPollTimeout = null;
     }
+    if (tgPollAbortController) {
+        try { tgPollAbortController.abort(); } catch (e) {}
+        tgPollAbortController = null;
+    }
 }
 
 export async function startTelegramPolling() {
     if (state.isPollingTelegram) return; // Verhindert doppelte Polling-Schleifen
+    const sessionId = ++tgPollSessionId;
     state.isPollingTelegram = true;
-    await flushOldTelegramUpdates();
-    if (!state.isPollingTelegram || !state.isRunning) {
-        state.isPollingTelegram = false;
+    await flushOldTelegramUpdates(sessionId);
+    if (sessionId !== tgPollSessionId || !state.isPollingTelegram || !state.isRunning) {
+        if (sessionId === tgPollSessionId) state.isPollingTelegram = false;
         return;
     }
-    pollTelegramLoop();
+    pollTelegramLoop(sessionId);
 }
 
-async function pollTelegramLoop() {
-    if (!state.isPollingTelegram || !state.isRunning) {
-        state.isPollingTelegram = false;
+async function pollTelegramLoop(sessionId) {
+    if (sessionId !== tgPollSessionId || !state.isPollingTelegram || !state.isRunning) {
+        if (sessionId === tgPollSessionId) state.isPollingTelegram = false;
         return;
     }
     if (!chkTelegram.checked || !txtTelegramToken.value.trim()) {
-        state.tgPollTimeout = setTimeout(pollTelegramLoop, 5000);
+        state.tgPollTimeout = setTimeout(() => pollTelegramLoop(sessionId), 5000);
         return;
     }
     try {
-        let res = await fetch(`https://api.telegram.org/bot${txtTelegramToken.value.trim()}/getUpdates?offset=${state.tgUpdateOffset}&timeout=25`);
+        const controller = new AbortController();
+        tgPollAbortController = controller;
+        let res = await fetch(
+            `https://api.telegram.org/bot${txtTelegramToken.value.trim()}/getUpdates?offset=${state.tgUpdateOffset}&timeout=25`,
+            { signal: controller.signal }
+        );
         let data = await res.json();
+        if (sessionId !== tgPollSessionId || !state.isPollingTelegram || !state.isRunning) return;
         if (data.ok && data.result.length > 0) {
             for (let item of data.result) {
+                if (item.update_id < state.tgUpdateOffset) continue;
                 state.tgUpdateOffset = item.update_id + 1;
                 if (item.message && item.message.chat.id.toString() === txtTelegramChatId.value.trim() && item.message.text) {
                     let text = item.message.text.trim();
@@ -543,9 +568,9 @@ async function pollTelegramLoop() {
             }
         }
     } catch (e) {}
-    if (state.isPollingTelegram && state.isRunning) {
-        state.tgPollTimeout = setTimeout(pollTelegramLoop, 1000);
-    } else {
+    if (sessionId === tgPollSessionId && state.isPollingTelegram && state.isRunning) {
+        state.tgPollTimeout = setTimeout(() => pollTelegramLoop(sessionId), 1000);
+    } else if (sessionId === tgPollSessionId) {
         state.isPollingTelegram = false;
     }
 }
