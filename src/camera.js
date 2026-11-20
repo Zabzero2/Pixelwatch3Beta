@@ -5,7 +5,7 @@ import {
     chkAudioGuard
 } from './dom.js';
 import { state, FRAME_INTERVAL } from './state.js';
-import { createZoomDisplays, updateMonitorButtonUI } from './ui.js';
+import { createZoomDisplays, updateMonitorButtonUI, showToast } from './ui.js';
 import { initAudio, restartAudioSystem, stopAudioSystem, processAudio, getRoomAudioStream } from './audio.js';
 import { fetchWeather } from './weather.js';
 import { startTelegramPolling, stopTelegramPolling, stopLiveListen } from './telegram.js';
@@ -64,6 +64,20 @@ export function adjustCanvas() {
     createZoomDisplays();
 }
 
+export async function requestWakeLock() {
+    if (!('wakeLock' in navigator) || !state.isRunning) return;
+    try {
+        if (state.wakeLock) {
+            try { await state.wakeLock.release(); } catch (e) {}
+            state.wakeLock = null;
+        }
+        state.wakeLock = await navigator.wakeLock.request('screen');
+        state.wakeLock.addEventListener('release', () => {
+            state.wakeLock = null;
+        });
+    } catch (err) {}
+}
+
 export async function startSystem() {
     try {
         let constraints = { video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } };
@@ -101,12 +115,10 @@ export async function startSystem() {
             loadCameras();
         }, 500);
         video.onloadedmetadata = () => { adjustCanvas(); video.play(); };
-        if ('wakeLock' in navigator) {
-            try { state.wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
-        }
         state.isRunning = true;
         state.isMonitoring = true;
         state.lastFrameTime = Date.now();
+        await requestWakeLock();
         updateMonitorButtonUI();
 
         initAudio();
@@ -116,7 +128,7 @@ export async function startSystem() {
 
         requestAnimationFrame(processFrame);
     } catch (err) {
-        alert('Kamerafehler: ' + err.message);
+        showToast('Kamerafehler: ' + err.message, 'error', 4500);
     }
 }
 

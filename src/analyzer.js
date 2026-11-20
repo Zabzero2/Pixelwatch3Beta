@@ -33,7 +33,7 @@ export function analyzeMute(now, imgW, imgH) {
     const my = Math.floor(muteBox.y);
     const mw = Math.floor(muteBox.w);
     const mh = Math.floor(muteBox.h);
-    if (muteBox.zoomCtx) {
+    if (!state.isStealthActive && muteBox.zoomCtx) {
         drawProportional(muteBox.zoomCtx, canvas, mx, my, mw, mh, 100, 50);
     }
 
@@ -120,7 +120,7 @@ export function analyzeMute(now, imgW, imgH) {
         }
     }
 
-    if (muteBox.zoomStatsDiv && state.showZoomValues && state.frameCounter % 4 === 0) {
+    if (!state.isStealthActive && muteBox.zoomStatsDiv && state.showZoomValues && state.frameCounter % 4 === 0) {
         let txt = `Struktur-Abw: ${structuralDiff} / Max: ${muteThreshold}<br>`;
         if (muteBox.state === 'MUTED') {
             let duration = now - muteBox.continuousStart;
@@ -167,7 +167,7 @@ export function analyzeBoxes(now, imgW, imgH) {
         const rh = Math.floor(box.h);
         const pixelCount = rw * rh;
 
-        if (box.zoomCtx) {
+        if (!state.isStealthActive && box.zoomCtx) {
             drawProportional(box.zoomCtx, canvas, rx, ry, rw, rh, 100, 50);
         }
 
@@ -258,12 +258,12 @@ export function analyzeBoxes(now, imgW, imgH) {
             box.isAlarm = false;
         }
 
-        if (box.zoomBoxDiv) {
+        if (!state.isStealthActive && box.zoomBoxDiv) {
             if (box.isAlarm && state.isMonitoring) box.zoomBoxDiv.classList.add('alarm-zoom');
             else box.zoomBoxDiv.classList.remove('alarm-zoom');
         }
 
-        if (box.zoomStatsDiv && state.showZoomValues && state.frameCounter % 4 === 0) {
+        if (!state.isStealthActive && box.zoomStatsDiv && state.showZoomValues && state.frameCounter % 4 === 0) {
             let txt = `Masse: <span style="color:#00aaff;">${activePixels}</span> px | Pkt: ${box.validCrossings}`;
             txt += `<br>Max-Delta: ${diff} / Limit: ${kritischeMasse}`;
             if (box.lastMeasuredCycle > 0) txt += `<br>Letzter: <span style="color:#00ff88;">${box.lastMeasuredCycle} ms</span>`;
@@ -285,7 +285,7 @@ export function analyzeAnchor(now, imgW, imgH) {
     const ay = Math.floor(anchorBox.y);
     const aw = Math.floor(anchorBox.w);
     const ah = Math.floor(anchorBox.h);
-    if (anchorBox.zoomCtx) {
+    if (!state.isStealthActive && anchorBox.zoomCtx) {
         drawProportional(anchorBox.zoomCtx, canvas, ax, ay, aw, ah, 80, 40);
     }
 
@@ -298,7 +298,7 @@ export function analyzeAnchor(now, imgW, imgH) {
         anchorBox.refNeedsDraw = true;
     }
 
-    if (anchorBox.refNeedsDraw && anchorBox.refCtx && anchorBox.baseline) {
+    if (!state.isStealthActive && anchorBox.refNeedsDraw && anchorBox.refCtx && anchorBox.baseline) {
         try {
             let drawData = new Uint8ClampedArray(anchorBox.baseline);
             let imgData = new ImageData(drawData, aw, ah);
@@ -358,12 +358,12 @@ export function analyzeAnchor(now, imgW, imgH) {
         }
     }
 
-    if (anchorBox.zoomBoxDiv) {
+    if (!state.isStealthActive && anchorBox.zoomBoxDiv) {
         if (anchorBox.isAlarm && state.isMonitoring) anchorBox.zoomBoxDiv.classList.add('alarm-zoom');
         else anchorBox.zoomBoxDiv.classList.remove('alarm-zoom');
     }
 
-    if (anchorBox.zoomStatsDiv && state.showZoomValues && state.frameCounter % 4 === 0) {
+    if (!state.isStealthActive && anchorBox.zoomStatsDiv && state.showZoomValues && state.frameCounter % 4 === 0) {
         let txt = `Abw: <span style="color:#00ff88;">${structuralDiff}</span> / Max: ${anchorThreshold}`;
         if (anchorBox.isAlarm && state.isMonitoring) {
             txt += `<br><b style="color:#ffaa00;">VERRUTSCHT!</b>`;
@@ -376,6 +376,85 @@ export function analyzeAnchor(now, imgW, imgH) {
     return anchorBox.isAlarm;
 }
 
+// Zeichnet alle aktiven Mess-, Anker- und Mute-Rahmen auf einen beliebigen Canvas-Kontext
+export function drawBoxOverlays(targetCtx = ctx) {
+    for (let i = 0; i < state.activeBoxCount; i++) {
+        const box = boxes[i];
+        let fillColor = box.isAlarm ? 'rgba(255,0,0,0.3)' : 'rgba(0,255,0,0.15)';
+        let borderColor = box.isAlarm ? '#ff0000' : '#00ff00';
+
+        targetCtx.fillStyle = fillColor;
+        targetCtx.fillRect(box.x, box.y, box.w, box.h);
+        if (box === state.selectedBox) {
+            targetCtx.beginPath();
+            targetCtx.rect(box.x - 4, box.y - 4, box.w + 8, box.h + 8);
+            targetCtx.lineWidth = 2;
+            targetCtx.strokeStyle = '#00aaff';
+            targetCtx.setLineDash([5, 5]);
+            targetCtx.stroke();
+            targetCtx.setLineDash([]);
+        }
+
+        targetCtx.beginPath();
+        targetCtx.rect(box.x, box.y, box.w, box.h);
+        targetCtx.lineWidth = box.isAlarm ? 4 : 2;
+        if (!state.isMonitoring) targetCtx.setLineDash([4, 4]);
+        targetCtx.strokeStyle = borderColor;
+        targetCtx.stroke();
+        targetCtx.setLineDash([]);
+    }
+
+    if (anchorBox.active) {
+        let aFillColor = anchorBox.isAlarm ? 'rgba(255,170,0,0.3)' : 'rgba(0,170,255,0.15)';
+        let aBorderColor = anchorBox.isAlarm ? '#ffaa00' : '#00aaff';
+
+        targetCtx.fillStyle = aFillColor;
+        targetCtx.fillRect(anchorBox.x, anchorBox.y, anchorBox.w, anchorBox.h);
+        if (anchorBox === state.selectedBox) {
+            targetCtx.beginPath();
+            targetCtx.rect(anchorBox.x - 4, anchorBox.y - 4, anchorBox.w + 8, anchorBox.h + 8);
+            targetCtx.lineWidth = 2;
+            targetCtx.strokeStyle = '#00aaff';
+            targetCtx.setLineDash([5, 5]);
+            targetCtx.stroke();
+            targetCtx.setLineDash([]);
+        }
+
+        targetCtx.beginPath();
+        targetCtx.rect(anchorBox.x, anchorBox.y, anchorBox.w, anchorBox.h);
+        targetCtx.lineWidth = anchorBox.isAlarm ? 4 : 2;
+        if (!state.isMonitoring) targetCtx.setLineDash([4, 4]);
+        targetCtx.strokeStyle = aBorderColor;
+        targetCtx.stroke();
+        targetCtx.setLineDash([]);
+    }
+
+    if (muteBox.active) {
+        let mFillColor = muteBox.state === 'MUTED' ? 'rgba(255,204,0,0.5)' : 'rgba(255,204,0,0.15)';
+        let mBorderColor = '#ffcc00';
+
+        targetCtx.fillStyle = mFillColor;
+        targetCtx.fillRect(muteBox.x, muteBox.y, muteBox.w, muteBox.h);
+        if (muteBox === state.selectedBox) {
+            targetCtx.beginPath();
+            targetCtx.rect(muteBox.x - 4, muteBox.y - 4, muteBox.w + 8, muteBox.h + 8);
+            targetCtx.lineWidth = 2;
+            targetCtx.strokeStyle = '#00aaff';
+            targetCtx.setLineDash([5, 5]);
+            targetCtx.stroke();
+            targetCtx.setLineDash([]);
+        }
+
+        targetCtx.beginPath();
+        targetCtx.rect(muteBox.x, muteBox.y, muteBox.w, muteBox.h);
+        targetCtx.lineWidth = muteBox.state === 'MUTED' ? 4 : 2;
+        if (!state.isMonitoring) targetCtx.setLineDash([4, 4]);
+        targetCtx.strokeStyle = mBorderColor;
+        targetCtx.stroke();
+        targetCtx.setLineDash([]);
+    }
+}
+
 export function drawUI() {
     if (state.isRecordingBoxId !== null) {
         let b = boxes.find(x => x.id === state.isRecordingBoxId);
@@ -386,81 +465,9 @@ export function drawUI() {
         }
     }
 
-    if (!state.showCamera) return;
+    // Rahmen auf dem Haupt-Canvas nur zeichnen, wenn sichtbar ODER gerade ein Vollbild-Video für Telegram läuft
+    const needsLiveDraw = state.showCamera && !state.isStealthActive;
+    if (!needsLiveDraw && !state.isCapturingFullVideo) return;
 
-    for (let i = 0; i < state.activeBoxCount; i++) {
-        const box = boxes[i];
-        let fillColor = box.isAlarm ? 'rgba(255,0,0,0.3)' : 'rgba(0,255,0,0.15)';
-        let borderColor = box.isAlarm ? '#ff0000' : '#00ff00';
-
-        ctx.fillStyle = fillColor;
-        ctx.fillRect(box.x, box.y, box.w, box.h);
-        if (box === state.selectedBox) {
-            ctx.beginPath();
-            ctx.rect(box.x - 4, box.y - 4, box.w + 8, box.h + 8);
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = '#00aaff';
-            ctx.setLineDash([5, 5]);
-            ctx.stroke();
-            ctx.setLineDash([]);
-        }
-
-        ctx.beginPath();
-        ctx.rect(box.x, box.y, box.w, box.h);
-        ctx.lineWidth = box.isAlarm ? 4 : 2;
-        if (!state.isMonitoring) ctx.setLineDash([4, 4]);
-        ctx.strokeStyle = borderColor;
-        ctx.stroke();
-        ctx.setLineDash([]);
-    }
-
-    if (anchorBox.active) {
-        let aFillColor = anchorBox.isAlarm ? 'rgba(255,170,0,0.3)' : 'rgba(0,170,255,0.15)';
-        let aBorderColor = anchorBox.isAlarm ? '#ffaa00' : '#00aaff';
-
-        ctx.fillStyle = aFillColor;
-        ctx.fillRect(anchorBox.x, anchorBox.y, anchorBox.w, anchorBox.h);
-        if (anchorBox === state.selectedBox) {
-            ctx.beginPath();
-            ctx.rect(anchorBox.x - 4, anchorBox.y - 4, anchorBox.w + 8, anchorBox.h + 8);
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = '#00aaff';
-            ctx.setLineDash([5, 5]);
-            ctx.stroke();
-            ctx.setLineDash([]);
-        }
-
-        ctx.beginPath();
-        ctx.rect(anchorBox.x, anchorBox.y, anchorBox.w, anchorBox.h);
-        ctx.lineWidth = anchorBox.isAlarm ? 4 : 2;
-        if (!state.isMonitoring) ctx.setLineDash([4, 4]);
-        ctx.strokeStyle = aBorderColor;
-        ctx.stroke();
-        ctx.setLineDash([]);
-    }
-
-    if (muteBox.active) {
-        let mFillColor = muteBox.state === 'MUTED' ? 'rgba(255,204,0,0.5)' : 'rgba(255,204,0,0.15)';
-        let mBorderColor = '#ffcc00';
-
-        ctx.fillStyle = mFillColor;
-        ctx.fillRect(muteBox.x, muteBox.y, muteBox.w, muteBox.h);
-        if (muteBox === state.selectedBox) {
-            ctx.beginPath();
-            ctx.rect(muteBox.x - 4, muteBox.y - 4, muteBox.w + 8, muteBox.h + 8);
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = '#00aaff';
-            ctx.setLineDash([5, 5]);
-            ctx.stroke();
-            ctx.setLineDash([]);
-        }
-
-        ctx.beginPath();
-        ctx.rect(muteBox.x, muteBox.y, muteBox.w, muteBox.h);
-        ctx.lineWidth = muteBox.state === 'MUTED' ? 4 : 2;
-        if (!state.isMonitoring) ctx.setLineDash([4, 4]);
-        ctx.strokeStyle = mBorderColor;
-        ctx.stroke();
-        ctx.setLineDash([]);
-    }
+    drawBoxOverlays(ctx);
 }

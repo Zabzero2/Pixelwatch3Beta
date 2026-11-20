@@ -7,7 +7,7 @@ import {
 } from './dom.js';
 import { state } from './state.js';
 import { recordAndSendAudio } from './telegram.js';
-import { updateSmartUI, updateAppVisuals } from './ui.js';
+import { updateSmartUI, updateAppVisuals, showToast } from './ui.js';
 
 // Deaktiviert aggressive Sprachfilter (Noise-Suppression & Echo-Cancellation),
 // damit Raumgeräusche, Piepstöne und weiter entfernte Stimmen nicht abgehackt werden.
@@ -130,7 +130,7 @@ export async function restartAudioSystem() {
         state.dataArray = new Uint8Array(state.analyser.frequencyBinCount);
         source.connect(state.analyser);
     } catch (e) {
-        alert("Mikrofon Fehler: " + e.message);
+        showToast("Mikrofon-Fehler: " + e.message, "error", 4500);
         chkAudioGuard.checked = false;
         updateSmartUI();
         updateAppVisuals();

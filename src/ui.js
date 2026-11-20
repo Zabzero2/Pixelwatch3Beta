@@ -23,12 +23,35 @@ import {
     slideAudioThreshold, valAudioThreshold,
     slideListenChunk, valListenChunk,
     slideListenAutoOff, valListenAutoOff,
-    selectedBoxIdLabel
+    selectedBoxIdLabel, toastContainer
 } from './dom.js';
 import { state, boxes, anchorBox, muteBox, HIT_PAD } from './state.js';
 import { isLocalMuted, playBeep } from './audio.js';
 import { updateStealthClock } from './weather.js';
 import { saveSettings } from './storage.js';
+
+export function showToast(message, type = 'info', durationMs = 3500) {
+    if (!toastContainer) return;
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    toast.addEventListener('click', () => {
+        toast.classList.add('toast-hide');
+        setTimeout(() => toast.remove(), 220);
+    });
+    toastContainer.appendChild(toast);
+
+    // Maximal 3 gleichzeitige Toasts anzeigen
+    while (toastContainer.children.length > 3) {
+        toastContainer.firstChild.remove();
+    }
+
+    setTimeout(() => {
+        if (!toast.isConnected) return;
+        toast.classList.add('toast-hide');
+        setTimeout(() => toast.remove(), 220);
+    }, durationMs);
+}
 
 export function drawProportional(ctxTarget, sourceCanvas, sx, sy, sw, sh, targetW, targetH) {
     ctxTarget.fillStyle = "black";

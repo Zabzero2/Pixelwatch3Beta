@@ -20,6 +20,7 @@
 <body>
 
 <div id="micAlarmUI">🎤 MIC ALARM</div>
+<div id="toastContainer" aria-live="polite"></div>
 
 <div id="stealthOverlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: black; display: none; z-index: 9999; justify-content: center; align-items: center; flex-direction: column; font-family: Arial, sans-serif; box-sizing: border-box; transition: color 0.5s;">
     
@@ -60,6 +61,7 @@
                 <li><code>/audio</code> oder <code>/audio 30</code> – Sendet eine einmalige Sprachaufnahme aus dem Raum (Standard 10s, max. 60s).</li>
                 <li><code>/listen</code> – Startet das <b>Live-Mithören</b> in fortlaufenden, nahtlosen Audio-Schnipseln. Die Schnipsel-Länge (Standard: 10s) und die automatische Abschaltung (Standard: 5 Min.) stellst du über die Schieberegler im Menü unter <i>Smart-Modem &amp; Warnungen</i> ein. Die Schnipsel kommen stumm (ohne Benachrichtigungston) an, und ältere Schnipsel werden automatisch wieder aus dem Chat gelöscht.</li>
                 <li><code>/stop</code> – Beendet das Live-Mithören sofort und räumt die verbliebenen Schnipsel im Chat auf.</li>
+                <li><code>/hilfe</code> oder <code>?</code> – Listet alle verfügbaren Telegram-Befehle direkt im Chat auf.</li>
             </ul>
 
             <h3 style="color: white; font-size: 16px; margin-bottom: 5px;">3. Smart-Modem, Audio-Wächter &amp; Wetter</h3>

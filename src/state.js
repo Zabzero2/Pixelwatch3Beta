@@ -68,6 +68,7 @@ export const state = {
     micStream: null,
     lastAcousticAlarm: 0,
     isRecordingVideo: false,
+    isCapturingFullVideo: false,
     isRecordingAudio: false,
     isRecordingBoxId: null,
     tgUpdateOffset: 0,

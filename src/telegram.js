@@ -3,11 +3,12 @@
 import {
     chkTelegram, txtTelegramToken, txtTelegramChatId,
     selTgVideoMode, slideListenChunk, slideListenAutoOff,
-    canvas, recordCanvas
+    canvas, ctx, recordCanvas
 } from './dom.js';
 import { state, boxes, anchorBox, DEFAULTS } from './state.js';
 import { getRoomAudioStream } from './audio.js';
 import { updateAppVisuals } from './ui.js';
+import { drawBoxOverlays } from './analyzer.js';
 
 const LIVE_LISTEN_OVERLAP_MS = 250;
 const LIVE_LISTEN_MAX_KEPT = 4;
@@ -85,11 +86,18 @@ export function recordAndSendVideo(boxId, isRemote = false, durationMs = 4000) {
         const mode = isRemote ? 'full' : selTgVideoMode.value;
         if (mode === 'box' && boxId !== null) {
             state.isRecordingBoxId = boxId;
+            state.isCapturingFullVideo = false;
             let b = boxes.find(x => x.id === boxId);
             recordCanvas.width = b.w * 3;
             recordCanvas.height = b.h * 3;
             stream = recordCanvas.captureStream(15);
         } else {
+            state.isRecordingBoxId = null;
+            state.isCapturingFullVideo = true;
+            // Falls Rahmen im Tarnmodus/bei ausgeblendetem Live-Bild gerade pausieren, für Frame 0 direkt zeichnen
+            if (!(state.showCamera && !state.isStealthActive)) {
+                drawBoxOverlays(ctx);
+            }
             stream = canvas.captureStream(15);
         }
 
@@ -97,12 +105,13 @@ export function recordAndSendVideo(boxId, isRemote = false, durationMs = 4000) {
         let chunks = [];
         recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
         recorder.onstop = async () => {
+            state.isCapturingFullVideo = false;
+            state.isRecordingBoxId = null;
             let blob = new Blob(chunks, { type: 'video/webm' });
             let fd = new FormData();
             fd.append("video", blob, "video.webm");
             fd.append("caption", caption);
             await sendTgMedia("sendVideo", fd);
-            state.isRecordingBoxId = null;
             setTimeout(() => { state.isRecordingVideo = false; }, 5000);
         };
         recorder.start(250);
@@ -110,8 +119,9 @@ export function recordAndSendVideo(boxId, isRemote = false, durationMs = 4000) {
             if (recorder.state !== 'inactive') recorder.stop();
         }, durationMs);
     } catch (e) {
-        sendTgPhoto(isRemote ? "📸 Remote Live-Bild" : "📸 Notfall-Bild Box " + boxId);
+        state.isCapturingFullVideo = false;
         state.isRecordingBoxId = null;
+        sendTgPhoto(isRemote ? "📸 Remote Live-Bild" : "📸 Notfall-Bild Box " + boxId);
         setTimeout(() => { state.isRecordingVideo = false; }, 5000);
     }
 }
@@ -374,13 +384,26 @@ export function stopLiveListen(isAutoOff = false, silent = false) {
 }
 
 export function sendTgPhoto(caption) {
-    if (!chkTelegram.checked) return;
-    canvas.toBlob(async (blob) => {
+    if (!chkTelegram.checked || !canvas.width || !canvas.height) return;
+    // Temporäre Kopie anlegen und Rahmen immer einzeichnen, falls sie gerade (Tarnmodus / Live-Bild aus) pausieren
+    const snapCanvas = document.createElement('canvas');
+    snapCanvas.width = canvas.width;
+    snapCanvas.height = canvas.height;
+    const snapCtx = snapCanvas.getContext('2d');
+    snapCtx.drawImage(canvas, 0, 0);
+
+    const alreadyHasOverlays = (state.showCamera && !state.isStealthActive) || state.isCapturingFullVideo;
+    if (!alreadyHasOverlays) {
+        drawBoxOverlays(snapCtx);
+    }
+
+    snapCanvas.toBlob(async (blob) => {
+        if (!blob) return;
         let fd = new FormData();
         fd.append("photo", blob, "live.jpg");
         fd.append("caption", caption);
         await sendTgMedia("sendPhoto", fd);
-    }, 'image/jpeg', 0.8);
+    }, 'image/jpeg', 0.85);
 }
 
 export function sendAnchorTgPhoto() {
@@ -411,6 +434,46 @@ export function sendAnchorTgPhoto() {
     }, 'image/jpeg', 0.9);
 }
 
+function sendTgHelpMessage() {
+    const chunkSec = Math.max(5, Math.min(30, parseInt(slideListenChunk.value) || DEFAULTS.listenChunkSec));
+    const autoOffMin = Math.max(1, Math.min(30, parseInt(slideListenAutoOff.value) || DEFAULTS.listenAutoOffMin));
+    const helpText = [
+        '🤖 Vigilux – Verfügbare Befehle:',
+        '',
+        '📸 /foto',
+        'Aktuelles Live-Bild (inkl. Mess-Rahmen)',
+        '',
+        '🎥 /video [Sek]',
+        'Live-Video aufnehmen (Standard: 4s, max. 60s)',
+        '',
+        '🎙️ /audio [Sek]',
+        'Einmalige Raum-Aufnahme (Standard: 10s, max. 60s)',
+        '',
+        '🎧 /listen',
+        `Fortlaufendes Live-Mithören (${chunkSec}s-Schnipsel, Auto-Aus nach ${autoOffMin} Min., automatisches Aufräumen)`,
+        '',
+        '⏹️ /stop',
+        'Live-Mithören sofort beenden & Chat aufräumen',
+        '',
+        '❓ /hilfe oder ?',
+        'Diese Befehlsübersicht anzeigen'
+    ].join('\n');
+    sendTgMessage(helpText);
+}
+
+// Überspringt beim Kamerastart alle älteren, aufgelaufenen Befehle aus der Zeit als die Kamera aus war
+async function flushOldTelegramUpdates() {
+    if (!chkTelegram.checked || !txtTelegramToken.value.trim()) return;
+    try {
+        const res = await fetch(`https://api.telegram.org/bot${txtTelegramToken.value.trim()}/getUpdates?offset=-1&timeout=0`);
+        const data = await res.json();
+        if (data.ok && data.result && data.result.length > 0) {
+            const latest = data.result[data.result.length - 1];
+            state.tgUpdateOffset = latest.update_id + 1;
+        }
+    } catch (e) {}
+}
+
 export function stopTelegramPolling() {
     state.isPollingTelegram = false;
     if (state.tgPollTimeout) {
@@ -419,9 +482,14 @@ export function stopTelegramPolling() {
     }
 }
 
-export function startTelegramPolling() {
+export async function startTelegramPolling() {
     if (state.isPollingTelegram) return; // Verhindert doppelte Polling-Schleifen
     state.isPollingTelegram = true;
+    await flushOldTelegramUpdates();
+    if (!state.isPollingTelegram || !state.isRunning) {
+        state.isPollingTelegram = false;
+        return;
+    }
     pollTelegramLoop();
 }
 
@@ -442,29 +510,34 @@ async function pollTelegramLoop() {
                 state.tgUpdateOffset = item.update_id + 1;
                 if (item.message && item.message.chat.id.toString() === txtTelegramChatId.value.trim() && item.message.text) {
                     let text = item.message.text.trim();
-                    if (text === '/foto') {
+                    let cmd = text.toLowerCase();
+                    if (cmd === '/foto' || cmd.startsWith('/foto@')) {
                         sendTgPhoto("📸 Remote Live-Bild");
-                    } else if (text.startsWith('/video')) {
-                        let parts = text.split(' ');
+                    } else if (cmd.startsWith('/video')) {
+                        let parts = text.split(/\s+/);
                         let durationSec = 4; // Default: 4 Sekunden
                         if (parts.length > 1 && !isNaN(parts[1])) {
                             durationSec = parseInt(parts[1]);
                             if (durationSec > 60) durationSec = 60; // Deckelung auf max 60s
+                            if (durationSec < 1) durationSec = 1;
                         }
                         recordAndSendVideo(null, true, durationSec * 1000);
-                    } else if (text.startsWith('/audio')) {
-                        let parts = text.split(' ');
+                    } else if (cmd.startsWith('/audio')) {
+                        let parts = text.split(/\s+/);
                         let durationSec = 10; // Default: 10 Sekunden
                         if (parts.length > 1 && !isNaN(parts[1])) {
                             durationSec = parseInt(parts[1]);
                             if (durationSec > 60) durationSec = 60; // Deckelung auf max 60s
+                            if (durationSec < 1) durationSec = 1;
                         }
                         recordAndSendAudio(true, durationSec * 1000);
-                    } else if (text === '/listen' || text.startsWith('/listen ') || text.startsWith('/listen@')) {
+                    } else if (cmd === '/listen' || cmd.startsWith('/listen ') || cmd.startsWith('/listen@')) {
                         // Schnipselgröße wird ausschließlich über den Schieberegler im App-Menü gesteuert
                         startLiveListen();
-                    } else if (text === '/stop' || text.startsWith('/stop@')) {
+                    } else if (cmd === '/stop' || cmd.startsWith('/stop@')) {
                         stopLiveListen(false, false);
+                    } else if (cmd === '?' || cmd === '/hilfe' || cmd.startsWith('/hilfe@') || cmd === '/help' || cmd.startsWith('/help@')) {
+                        sendTgHelpMessage();
                     }
                 }
             }

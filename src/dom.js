@@ -116,3 +116,4 @@ export const rowMuteDriftSpeed = document.getElementById('rowMuteDriftSpeed');
 export const selectedBoxIdLabel = document.getElementById('selectedBoxId');
 export const hoursHTML = document.getElementById('hoursHTML');
 export const minsHTML = document.getElementById('minsHTML');
+export const toastContainer = document.getElementById('toastContainer');

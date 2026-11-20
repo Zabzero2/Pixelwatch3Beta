@@ -23,7 +23,7 @@ import { state, boxes, anchorBox, muteBox } from './state.js';
 import {
     togglePanel, updateUIVisibility, updateSmartUI, createZoomDisplays,
     updateZoomSelectionUI, updateLabels, updateMaxDeltaLimitRange,
-    updateMonitorButtonUI, setupAdjBtn, bindTurboButton,
+    updateMonitorButtonUI, showToast, setupAdjBtn, bindTurboButton,
     startDrag, moveDrag, endDrag
 } from './ui.js';
 import {
@@ -32,7 +32,7 @@ import {
 } from './storage.js';
 import { restartAudioSystem, stopAudioSystem } from './audio.js';
 import { fetchWeather, updateStealthClock } from './weather.js';
-import { startSystem, stopSystem, requestInitialPermissions } from './camera.js';
+import { startSystem, stopSystem, requestInitialPermissions, requestWakeLock } from './camera.js';
 
 // Service Worker registrieren & direkt alle Berechtigungen (Kamera + Mikrofon) anfragen
 window.addEventListener('load', () => {
@@ -99,11 +99,11 @@ selLocalSound.addEventListener('change', () => { updateSmartUI(); saveSettings()
 chkAudioGuard.addEventListener('change', () => {
     if (chkAudioGuard.checked) {
         if (!chkTelegram.checked || !txtTelegramToken.value.trim() || !txtTelegramChatId.value.trim()) {
-            alert('Bitte aktiviere und konfiguriere zuerst Telegram im Menü!');
+            showToast('Bitte aktiviere und konfiguriere zuerst Telegram im Menü.', 'warn', 4000);
             chkAudioGuard.checked = false;
             return;
         } else {
-            alert('ACHTUNG: Alle lokalen Alarme sind stummgeschaltet! Warnungen erfolgen nur noch über Telegram.');
+            showToast('Lokale Alarme sind stummgeschaltet – Warnungen erfolgen nur noch über Telegram.', 'info', 4000);
         }
     }
     updateSmartUI();
@@ -213,6 +213,7 @@ activateStealthBtn.addEventListener('click', () => {
 exitStealthBtn.addEventListener('click', () => {
     stealthOverlay.style.display = 'none';
     state.isStealthActive = false;
+    state.frameCounter = 0; // Zoom-Werte sofort im nächsten Frame aktualisieren
 });
 
 toggleAudioGuardBtnStealth.addEventListener('click', (e) => {
@@ -281,7 +282,7 @@ document.getElementById('btnResetAll').addEventListener('click', resetAllModules
 // Überwachung Aktiv/Pausiert Button
 monitorBtn.addEventListener('click', () => {
     if (!state.isRunning) {
-        alert('Bitte erst Kamera starten!');
+        showToast('Bitte erst Kamera starten!', 'warn', 3000);
         return;
     }
     state.isMonitoring = !state.isMonitoring;
@@ -369,6 +370,13 @@ window.addEventListener('touchend', endDrag);
 startBtn.addEventListener('click', () => {
     if (!state.isRunning) startSystem();
     else stopSystem();
+});
+
+// Display-Wachhalter (WakeLock) nach App-Wechsel / Entsperren automatisch erneuern
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && state.isRunning) {
+        requestWakeLock();
+    }
 });
 
 // Wetter-Update alle 5 Minuten
